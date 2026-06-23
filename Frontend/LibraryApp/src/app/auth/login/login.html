@@ -1,0 +1,174 @@
+<div class="split-login-wrapper">
+  <!-- Left Side: Immersive Background & Brand -->
+  <div class="split-left-pane">
+    <div class="login-bg-layer"></div>
+    <div class="login-overlay-gradient"></div>
+    <div class="hero-typography">
+      <h1 class="hero-title">JINDAL STAINLESS<br><span class="hero-highlight">LIMITED</span></h1>
+      <h2 class="hero-subtitle">Corporate Library Application</h2>
+    </div>
+  </div>
+
+  <!-- Right Side: Clean Login Form -->
+  <div class="split-right-pane">
+    <div class="premium-form-container">
+      
+      <!-- Branding -->
+      <div class="brand-section">
+        <div class="logo-container">
+          <img src="assets/images/jsl_logo.jpg" alt="JSL Logo" class="brand-logo-img" />
+        </div>
+        <h1 class="welcome-title">Welcome Back</h1>
+        <p class="welcome-subtitle">Your gateway to knowledge.</p>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="error-pill">
+        <i class="fa fa-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Login Form -->
+      <form *ngIf="!mfaRequired && !requirePasswordChange" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="premium-login-form">
+        
+        <!-- Email Input -->
+        <div class="floating-group">
+          <input 
+            id="email" 
+            type="email" 
+            formControlName="email" 
+            class="floating-input" 
+            placeholder=" " 
+            autocomplete="off" />
+          <label for="email" class="floating-label">Email ID</label>
+          <div class="input-line"></div>
+          <i class="fa fa-envelope input-icon-right"></i>
+        </div>
+        <div class="validation-text" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          <i class="fa fa-info-circle"></i> Please enter a valid Email ID.
+        </div>
+
+        <!-- Password Input -->
+        <div class="floating-group" style="margin-top: 1.5rem;">
+          <input 
+            id="password" 
+            type="password" 
+            formControlName="password" 
+            class="floating-input" 
+            placeholder=" " />
+          <label for="password" class="floating-label">Password</label>
+          <div class="input-line"></div>
+          <i class="fa fa-lock input-icon-right"></i>
+        </div>
+        <div class="validation-text" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          <i class="fa fa-info-circle"></i> Password must be at least 6 characters.
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn-premium-submit" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Sign In</span>
+            <span *ngIf="isLoading" class="loading-state">
+              <i class="fa fa-circle-o-notch fa-spin"></i> Authenticating...
+            </span>
+            <div class="btn-overlay"></div>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- OTP Verification Form -->
+      <form *ngIf="mfaRequired" [formGroup]="otpForm" (ngSubmit)="onOtpSubmit()" class="premium-login-form">
+        <div style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+          <i class="fa fa-shield fa-2x" style="color: var(--primary); margin-bottom: 0.5rem; display: block;"></i>
+          A 6-digit verification code has been sent to:<br>
+          <strong style="color: var(--text-primary);">{{ emailForMfa }}</strong>
+        </div>
+
+        <!-- OTP Input -->
+        <div class="floating-group">
+          <input 
+            id="otp" 
+            type="text" 
+            formControlName="otp" 
+            class="floating-input" 
+            placeholder=" " 
+            autocomplete="off" 
+            maxlength="6" />
+          <label for="otp" class="floating-label">Verification Code (OTP)</label>
+          <div class="input-line"></div>
+          <i class="fa fa-key input-icon-right"></i>
+        </div>
+        <div class="validation-text" *ngIf="otpForm.get('otp')?.invalid && otpForm.get('otp')?.touched">
+          <i class="fa fa-info-circle"></i> Code must be a 6-digit verification code.
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions" style="margin-top: 2rem;">
+          <button type="submit" class="btn-premium-submit" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Verify & Log In</span>
+            <span *ngIf="isLoading" class="loading-state">
+              <i class="fa fa-circle-o-notch fa-spin"></i> Verifying...
+            </span>
+            <div class="btn-overlay"></div>
+          </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="button" class="btn-modern btn-ghost btn-sm" (click)="mfaRequired=false; errorMessage='';" style="color: var(--primary); background: none; border: none; cursor: pointer;">
+            <i class="fa fa-arrow-left"></i> Back to Login
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Force Change Password Form -->
+      <form *ngIf="requirePasswordChange" [formGroup]="forceChangePasswordForm" (ngSubmit)="onForceChangePasswordSubmit()" class="premium-login-form">
+        <div style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+          <i class="fa fa-lock fa-2x" style="color: var(--primary); margin-bottom: 0.5rem; display: block;"></i>
+          You must change your default password to continue.<br>
+          <strong style="color: var(--text-primary);">{{ emailForMfa }}</strong>
+        </div>
+
+        <!-- New Password Input -->
+        <div class="floating-group">
+          <input 
+            id="newPassword" 
+            type="password" 
+            formControlName="newPassword" 
+            class="floating-input" 
+            placeholder=" " />
+          <label for="newPassword" class="floating-label">New Password</label>
+          <div class="input-line"></div>
+          <i class="fa fa-key input-icon-right"></i>
+        </div>
+        <div class="validation-text" *ngIf="forceChangePasswordForm.get('newPassword')?.invalid && forceChangePasswordForm.get('newPassword')?.touched">
+          <i class="fa fa-info-circle"></i> Password must be at least 8 chars, with upper, lower, number, and special character.
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions" style="margin-top: 2rem;">
+          <button type="submit" class="btn-premium-submit" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Change Password</span>
+            <span *ngIf="isLoading" class="loading-state">
+              <i class="fa fa-circle-o-notch fa-spin"></i> Processing...
+            </span>
+            <div class="btn-overlay"></div>
+          </button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="button" class="btn-modern btn-ghost btn-sm" (click)="requirePasswordChange=false; errorMessage='';" style="color: var(--primary); background: none; border: none; cursor: pointer;">
+            <i class="fa fa-arrow-left"></i> Back to Login
+          </button>
+        </div>
+
+      </form>
+      
+      <div class="card-footer">
+        <p>Secure Corporate Portal &copy; 2026</p>
+      </div>
+
+    </div>
+  </div>
+</div>

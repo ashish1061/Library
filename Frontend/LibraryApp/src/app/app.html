@@ -1,0 +1,230 @@
+<ng-container *ngIf="isAuthPage; else dashboardLayout">
+  <router-outlet></router-outlet>
+</ng-container>
+
+<ng-template #dashboardLayout>
+  <div class="dashboard-layout" [class.mobile-sidebar-open]="mobileSidebarOpen">
+
+    <!-- MOBILE OVERLAY BACKDROP -->
+    <div class="sidebar-overlay" (click)="toggleSidebar()" *ngIf="mobileSidebarOpen"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar-modern" id="sidebar" [class.collapsed]="sidebarCollapsed" [class.mobile-open]="mobileSidebarOpen">
+      <div class="sidebar-brand">
+        <img src="assets/images/jsl_logo.jpg" alt="JSL" class="brand-logo" />
+        <div class="brand-text">
+          <span>Library</span>
+          <span class="brand-sub">Digital Platform</span>
+        </div>
+      </div>
+
+      <ul class="sidebar-nav">
+        
+        <!-- NORMAL USER MENU -->
+        <ng-container *ngIf="!isAdmin">
+          <li class="nav-section">General</li>
+          <li>
+            <a routerLink="/library/book-search" routerLinkActive="active" data-tooltip="Search Books">
+              <i class="fa fa-search"></i>
+              <span class="nav-text">Search Books</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/library/request-issue" routerLinkActive="active" data-tooltip="Request Issue">
+              <i class="fa fa-hand-paper-o"></i>
+              <span class="nav-text">Request Issue</span>
+            </a>
+          </li>
+          <li>
+            <a routerLink="/library/my-history" routerLinkActive="active" data-tooltip="My History">
+              <i class="fa fa-history"></i>
+              <span class="nav-text">My History</span>
+            </a>
+          </li>
+        </ng-container>
+
+        <!-- ADMIN/LIBRARIAN MENU -->
+        <ng-container *ngIf="isAdmin">
+          
+          <!-- LIBRARIAN SECTION -->
+          <li class="nav-section-wrapper">
+            <div class="nav-section collapsible-section" (click)="librarianMenuExpanded = !librarianMenuExpanded">
+              <span>Librarian</span>
+              <i class="fa" [ngClass]="librarianMenuExpanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            </div>
+            <ul class="submenu" [class.expanded]="librarianMenuExpanded">
+              <li>
+                <a routerLink="/library/dashboard" routerLinkActive="active" data-tooltip="Dashboard">
+                  <i class="fa fa-home"></i>
+                  <span class="nav-text">Dashboard</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/library/book-search" routerLinkActive="active" data-tooltip="Search Books">
+                  <i class="fa fa-search"></i>
+                  <span class="nav-text">Search Books</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/library/request-issue" routerLinkActive="active" data-tooltip="Request Issue">
+                  <i class="fa fa-hand-paper-o"></i>
+                  <span class="nav-text">Request Issue</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/library/issue-book" routerLinkActive="active" data-tooltip="Issue Book">
+                  <i class="fa fa-arrow-circle-right"></i>
+                  <span class="nav-text">Issue Book</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/library/return-book" routerLinkActive="active" data-tooltip="Active Issues">
+                  <i class="fa fa-exclamation-circle"></i>
+                  <span class="nav-text">Active Issues</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/admin/approve-requests" routerLinkActive="active" data-tooltip="Approve Requests">
+                  <i class="fa fa-check-square-o"></i>
+                  <span class="nav-text">Approve Requests</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/library/issue-history" routerLinkActive="active" data-tooltip="Reports &amp; History">
+                  <i class="fa fa-file-text-o"></i>
+                  <span class="nav-text">Reports &amp; History</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <!-- ADMIN SECTION -->
+          <li class="nav-section-wrapper">
+            <div class="nav-section collapsible-section" (click)="adminMenuExpanded = !adminMenuExpanded">
+              <span>Admin</span>
+              <i class="fa" [ngClass]="adminMenuExpanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
+            </div>
+            <ul class="submenu" [class.expanded]="adminMenuExpanded">
+              <li>
+                <a routerLink="/admin/manage-books" routerLinkActive="active" data-tooltip="Manage Books">
+                  <i class="fa fa-book"></i>
+                  <span class="nav-text">Manage Books</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/admin/manage-magazines" routerLinkActive="active" data-tooltip="Manage Magazines">
+                  <i class="fa fa-newspaper-o"></i>
+                  <span class="nav-text">Manage Magazines</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/admin/manage-employees" routerLinkActive="active" data-tooltip="Employees">
+                  <i class="fa fa-users"></i>
+                  <span class="nav-text">Employees</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/admin/manage-mfa" routerLinkActive="active" data-tooltip="Manage MFA">
+                  <i class="fa fa-shield"></i>
+                  <span class="nav-text">Manage MFA</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/admin/email-templates" routerLinkActive="active" data-tooltip="Email Templates">
+                  <i class="fa fa-envelope-o"></i>
+                  <span class="nav-text">Email Templates</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/auth/register" routerLinkActive="active" data-tooltip="Register User">
+                  <i class="fa fa-user-plus"></i>
+                  <span class="nav-text">Register User</span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/auth/change-password" routerLinkActive="active" data-tooltip="Change Password">
+                  <i class="fa fa-key"></i>
+                  <span class="nav-text">Change Password</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ng-container>
+      </ul>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+
+      <!-- HEADER -->
+      <header class="header-modern">
+        <div class="header-left">
+          <button class="header-toggle" id="btnToggleSidebar" (click)="toggleSidebar()" title="Toggle sidebar">
+            <i class="fa fa-bars"></i>
+          </button>
+        </div>
+
+        <div class="header-user">
+          <div class="user-info">
+            <div class="avatar">{{ userInitial }}</div>
+            <div>
+              <div class="user-name">{{ userName }}</div>
+              <div class="user-role">{{ isAdmin ? 'Administrator' : 'Member' }}</div>
+            </div>
+          </div>
+          <div class="header-divider"></div>
+          <button class="btn-modern btn-secondary btn-sm" (click)="logout()" title="Sign out">
+            <i class="fa fa-sign-out"></i>
+            <span>Logout</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content-area">
+        <router-outlet></router-outlet>
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- Session Expiration Overlay and Modal -->
+  <div class="session-modal-overlay" *ngIf="isWarningActive">
+    <div class="session-modal-card">
+      <div class="session-modal-header">
+        <div class="alert-icon-ring">
+          <i class="fa fa-hourglass-half"></i>
+        </div>
+        <h2>Session Expiring</h2>
+      </div>
+      
+      <div class="session-modal-body">
+        <p>Your session will expire soon due to inactivity. You will be automatically logged out in:</p>
+        
+        <div class="session-countdown-timer">
+          {{ countdownFormatted }}
+        </div>
+        
+        <div class="session-progress-container">
+          <div class="session-progress-bar" [style.width.%]="(countdownSeconds / 120) * 100"></div>
+        </div>
+      </div>
+      
+      <div class="session-modal-footer">
+        <button class="btn-modern btn-primary btn-extend" (click)="extendSession()">
+          <i class="fa fa-refresh"></i>
+          <span>Keep Me Signed In</span>
+        </button>
+        <button class="btn-modern btn-secondary btn-logout" (click)="logout()">
+          <i class="fa fa-sign-out"></i>
+          <span>Sign Out Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</ng-template>
+
+<!-- Global Toast and Async Confirm Dialog Component -->
+<app-toast></app-toast>

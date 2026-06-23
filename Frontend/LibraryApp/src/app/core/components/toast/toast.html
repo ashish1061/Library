@@ -1,0 +1,45 @@
+<!-- Stackable Toasts -->
+<div class="toast-container">
+  <div 
+    *ngFor="let toast of toasts" 
+    class="toast-message" 
+    [class]="toast.type"
+    (click)="removeToast(toast.id)">
+    <i class="toast-icon fa" 
+       [class.fa-check-circle]="toast.type === 'success'" 
+       [class.fa-times-circle]="toast.type === 'error'" 
+       [class.fa-info-circle]="toast.type === 'info'"
+       [class.fa-warning]="toast.type === 'warning'"></i>
+    <div class="toast-content">{{ toast.message }}</div>
+    <button class="btn-toast-close" (click)="$event.stopPropagation(); removeToast(toast.id)">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Global Custom Confirmation Overlay Dialog -->
+<div class="toast-confirm-overlay" *ngIf="activeConfirm" (click)="resolveConfirm(false)">
+  <div class="toast-confirm-card" (click)="$event.stopPropagation()">
+    <div class="toast-confirm-header">
+      <div class="confirm-icon-ring">
+        <i class="fa fa-exclamation-triangle"></i>
+      </div>
+      <h2>Confirmation</h2>
+    </div>
+    
+    <div class="toast-confirm-body">
+      <p>{{ activeConfirm.message }}</p>
+    </div>
+    
+    <div class="toast-confirm-footer">
+      <button class="btn-modern btn-primary btn-confirm-yes" (click)="resolveConfirm(true)">
+        <i class="fa fa-check"></i>
+        <span>Yes, Proceed</span>
+      </button>
+      <button class="btn-modern btn-secondary btn-confirm-no" (click)="resolveConfirm(false)">
+        <i class="fa fa-times"></i>
+        <span>Cancel</span>
+      </button>
+    </div>
+  </div>
+</div>

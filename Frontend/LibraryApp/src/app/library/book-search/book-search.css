@@ -1,0 +1,315 @@
+/* ==========================================================================
+   BOOK SEARCH - MODERN PREMIUM STYLES
+   ========================================================================== */
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+/* Card Container */
+.book-card {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s ease;
+  position: relative;
+}
+
+.book-card:hover {
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-strong);
+}
+
+/* Cover Section */
+.book-cover-wrapper {
+  position: relative;
+  height: 150px;
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+}
+
+.book-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.book-card:hover .book-cover-img {
+  transform: scale(1.05);
+}
+
+/* Realistic 3D Typographic Book Cover (Fallback) */
+.book-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  color: #FFFFFF;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  box-shadow: inset 0 -30px 40px -10px rgba(0, 0, 0, 0.3);
+}
+
+/* Spine Fold Shadow Overlay to create a 3D book depth */
+.book-cover-placeholder::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 100%;
+  background: linear-gradient(to right, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.05) 50%, rgba(255,255,255,0.08) 100%);
+  z-index: 2;
+}
+
+.cover-category-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background-color: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-full);
+  align-self: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cover-title-text {
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.25;
+  margin-top: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.cover-author-text {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Book Body Content */
+.book-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.book-title-main {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.35;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.book-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.book-meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  gap: 0.4rem;
+}
+
+.book-meta-item i {
+  color: var(--text-muted);
+  width: 16px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.book-meta-item strong {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+/* Location Tag */
+.shelf-location-tag {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--border-color);
+}
+
+.shelf-location-tag i {
+  color: var(--primary-mid);
+}
+
+/* Card Footer Actions & Statuses */
+.book-card-footer {
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-surface-hover);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 0.75rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+.status-badge.available {
+  background-color: var(--success-light);
+  color: var(--success);
+}
+
+.status-badge.issued {
+  background-color: var(--error-light);
+  color: var(--error);
+}
+
+.btn-reserve {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+/* Filters Layout */
+.filters-card {
+  padding: 0.75rem 1rem !important;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.filters-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.filter-input-wrapper i {
+  position: absolute;
+  left: 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  pointer-events: none;
+}
+
+.filter-input-wrapper .input-modern {
+  padding-left: 2.5rem;
+  width: 100%;
+}
+
+/* Empty State Styling */
+.search-empty-state {
+  text-align: center;
+  padding: 4.5rem 2rem;
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.search-empty-state i {
+  font-size: 3rem;
+  color: var(--border-strong);
+  margin-bottom: 0.5rem;
+}
+
+.search-empty-state h3 {
+  color: var(--text-main);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.search-empty-state p {
+  max-width: 400px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Responsive Grid Adapters */
+@media (max-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filters-card {
+    margin-top: -1.5rem;
+  }
+}

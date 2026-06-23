@@ -1,0 +1,245 @@
+<div class="manage-books-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="fa fa-users"></i> Manage Employees</h1>
+            <p class="page-subtitle">Bulk edit employee records and sync with Darwinbox.</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <button class="btn-modern" style="background-color: var(--success); color: white;" (click)="openBulkModal()">
+                <i class="fa fa-upload"></i>
+                <span style="margin-left: 0.5rem;">Bulk Upload CSV</span>
+            </button>
+            <button class="btn-modern" (click)="syncDarwinbox()" [disabled]="isSyncing" style="background-color: var(--warning); color: white;">
+                <i class="fa" [ngClass]="{'fa-refresh fa-spin': isSyncing, 'fa-cloud-download': !isSyncing}"></i>
+                <span style="margin-left: 0.5rem;">{{ isSyncing ? 'Syncing...' : 'Sync Darwinbox' }}</span>
+            </button>
+            <button class="btn-modern btn-primary" (click)="saveAll()" [disabled]="isLoading">
+                <i class="fa fa-save"></i>
+                <span style="margin-left: 0.5rem;">Save All Changes</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="surface-card" style="margin-bottom: 1rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div style="flex: 1; max-width: 400px; position: relative;">
+            <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+            <input type="text" class="input-modern" placeholder="Search employees by name, ID, email, dept..." [(ngModel)]="searchQuery" (input)="currentPage = 1" style="padding-left: 2.5rem; width: 100%;">
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label style="font-weight: 500; font-size: 0.9rem;">Per page:</label>
+                <select class="input-modern" style="padding: 0.25rem 2rem 0.25rem 0.5rem; height: auto;" [(ngModel)]="pageSize" (change)="currentPage = 1">
+                    <option [ngValue]="10">10</option>
+                    <option [ngValue]="20">20</option>
+                    <option [ngValue]="50">50</option>
+                    <option [ngValue]="100">100</option>
+                    <option [ngValue]="500">500</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="surface-card" style="padding: 0; overflow-x: auto;">
+        <div class="table-responsive">
+            <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px; text-align: center;">Avatar</th>
+                    <th>Emp ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let emp of filteredAndPagedEmployees" style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+                    <td style="padding: 0.5rem; text-align: center;">
+                        <div class="employee-avatar-wrapper" (click)="openEmployeeDetails(emp)" title="View Details / Update Photo">
+                            <img *ngIf="emp.imagePath" [src]="emp.imagePath" class="employee-table-avatar" alt="Avatar">
+                            <div *ngIf="!emp.imagePath" class="employee-table-avatar-placeholder">
+                                {{ getInitials(emp.empName) }}
+                            </div>
+                            <div class="avatar-hover-overlay">
+                                <i class="fa fa-camera" style="color: white; font-size: 0.85rem;"></i>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 1rem; font-weight: 600;">{{ emp.empID }}</td>
+                    <td style="padding: 0.5rem 1rem;">
+                        <input type="text" class="input-modern" style="padding: 0.5rem;" [(ngModel)]="emp.empName">
+                    </td>
+                    <td style="padding: 0.5rem 1rem;">
+                        <input type="email" class="input-modern" style="padding: 0.5rem;" [(ngModel)]="emp.emailid">
+                    </td>
+                    <td style="padding: 0.5rem 1rem;">
+                        <input type="text" class="input-modern" style="padding: 0.5rem;" [(ngModel)]="emp.mobile">
+                    </td>
+                    <td style="padding: 0.5rem 1rem;">
+                        <input type="text" class="input-modern" style="padding: 0.5rem;" [(ngModel)]="emp.department">
+                    </td>
+                    <td style="padding: 0.5rem 1rem;">
+                        <input type="text" class="input-modern" style="padding: 0.5rem;" [(ngModel)]="emp.designation">
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.5rem 1rem;" *ngIf="totalPages > 1">
+        <button class="btn-modern btn-ghost" [disabled]="currentPage === 1" (click)="currentPage = currentPage - 1">
+            <i class="fa fa-chevron-left"></i> Previous
+        </button>
+        <span style="color: var(--text-secondary); font-size: 0.9rem;">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button class="btn-modern btn-ghost" [disabled]="currentPage === totalPages" (click)="currentPage = currentPage + 1">
+            Next <i class="fa fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Employee Details Drawer (Sliding glassmorphic panel) -->
+<div class="drawer-overlay" *ngIf="isDrawerOpen" (click)="closeDrawer()">
+    <div class="drawer-card" (click)="$event.stopPropagation()">
+        <div class="drawer-header">
+            <h3>Employee Details</h3>
+            <button class="btn-close-drawer" (click)="closeDrawer()" title="Close details">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+
+        <div class="drawer-body" *ngIf="selectedEmployee">
+            <!-- Profile Image Section -->
+            <div class="profile-image-section">
+                <div class="profile-image-container">
+                    <img *ngIf="selectedEmployee.imagePath" [src]="selectedEmployee.imagePath" class="profile-large-image" alt="Profile Photo">
+                    <div *ngIf="!selectedEmployee.imagePath" class="profile-large-placeholder">
+                        {{ getInitials(selectedEmployee.empName) }}
+                    </div>
+                    <label class="btn-upload-overlay" title="Upload new photo">
+                        <i class="fa fa-camera"></i>
+                        <input type="file" style="display: none;" (change)="onImageSelected($event)" accept="image/*">
+                    </label>
+                </div>
+                <h4>{{ selectedEmployee.empName }}</h4>
+                <span class="designation-pill">{{ selectedEmployee.Designation || 'Member' }}</span>
+            </div>
+
+            <!-- Profile Picture Actions -->
+            <div class="drawer-actions-card">
+                <h5>Profile Photo Management</h5>
+                <div class="drawer-action-buttons">
+                    <button class="btn-drawer-action btn-darwinbox" (click)="fetchFromDarwinbox()" [disabled]="selectedEmployee.isFetchingDarwinbox">
+                        <i class="fa" [class.fa-refresh]="selectedEmployee.isFetchingDarwinbox" [class.fa-spin]="selectedEmployee.isFetchingDarwinbox" [class.fa-cloud-download]="!selectedEmployee.isFetchingDarwinbox"></i>
+                        <span>{{ selectedEmployee.isFetchingDarwinbox ? 'Fetching...' : 'Fetch from Darwinbox' }}</span>
+                    </button>
+                    
+                    <label class="btn-drawer-action btn-upload-local">
+                        <i class="fa fa-upload"></i>
+                        <span>Upload New Photo</span>
+                        <input type="file" style="display: none;" (change)="onImageSelected($event)" accept="image/*">
+                    </label>
+
+                    <button class="btn-drawer-action" (click)="resetPassword()" style="background-color: #dc3545; color: white;">
+                        <i class="fa fa-key"></i>
+                        <span>Reset Password</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- official Records List -->
+            <div class="details-list-card">
+                <h5>Official Records</h5>
+                <div class="detail-row">
+                    <span class="detail-label">Employee ID</span>
+                    <span class="detail-value font-semibold" style="color: var(--primary);">{{ selectedEmployee.empID }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Full Name</span>
+                    <span class="detail-value">{{ selectedEmployee.empName }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email Address</span>
+                    <span class="detail-value">{{ selectedEmployee.emailid }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Mobile Number</span>
+                    <span class="detail-value">{{ selectedEmployee.mobile }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Department</span>
+                    <span class="detail-value">{{ selectedEmployee.Department || 'N/A' }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Designation</span>
+                    <span class="detail-value">{{ selectedEmployee.Designation || 'N/A' }}</span>
+                </div>
+            </div>
+
+            <!-- Security Settings -->
+            <div class="details-list-card" style="margin-top: 1rem;">
+                <h5>Security Settings</h5>
+                <div class="detail-row" style="align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <i class="fa fa-shield" style="color: var(--primary); font-size: 1.2rem;"></i>
+                        <div>
+                            <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 0.25rem;">Administrator Access</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Grants this user full administrative privileges across the system.</div>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" [checked]="selectedEmployee.isAdmin" (change)="toggleAdmin(selectedEmployee, $event)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal: Bulk Upload Employees -->
+<div class="modal-overlay" *ngIf="showBulkModal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div class="modal-card" style="background: white; border-radius: 8px; width: 520px; max-width: 90vw; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+    <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; font-size: 1.25rem;"><i class="fa fa-users" style="color: var(--primary); margin-right: 0.5rem;"></i>Bulk Upload Employees (CSV)</h2>
+      <button (click)="closeBulkModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 1.5rem;">
+
+      <!-- Instructions Box -->
+      <div style="background-color: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 0.95rem; font-weight: 600; margin-top: 0; margin-bottom: 0.75rem;"><i class="fa fa-info-circle" style="color: var(--primary);"></i> Upload Instructions</h3>
+        <ul style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; padding-left: 1.25rem; line-height: 1.8;">
+          <li>Create a <strong>.csv</strong> file with the following column order.</li>
+          <li>Column headers must match <strong>exactly</strong>: <code style="background:#f1f5f9; padding: 1px 5px; border-radius: 3px;">EmpID, EmpName, password, emailid, mobile, Department, Designation</code></li>
+          <li>Leave the <strong>password</strong> column blank to assign the default <strong>Library&#64;123</strong>.</li>
+          <li>Employees already in the system (by email) will be <strong>skipped</strong>.</li>
+          <li>Employees will be required to change their password on first login.</li>
+        </ul>
+        <div style="margin-top: 0.5rem;">
+          <a href="/assets/sample-employees.csv" download style="font-size: 0.85rem; color: var(--accent); font-weight: 500; text-decoration: none;">
+            <i class="fa fa-download"></i> Download Sample CSV
+          </a>
+        </div>
+      </div>
+
+      <!-- File Input -->
+      <input type="file" (change)="onBulkFileSelected($event)" accept=".csv" class="input-modern" style="width: 100%; padding: 0.5rem;" />
+      <p *ngIf="bulkUploadFile" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--success);">
+        <i class="fa fa-check-circle"></i> Selected: {{ bulkUploadFile.name }}
+      </p>
+    </div>
+    <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 1rem;">
+      <button class="btn-modern btn-ghost" (click)="closeBulkModal()">Cancel</button>
+      <button class="btn-modern btn-primary" (click)="uploadBulk()" [disabled]="!bulkUploadFile || isUploading">
+        <i class="fa" [ngClass]="isUploading ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
+        {{ isUploading ? ' Uploading...' : ' Upload CSV' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+
+

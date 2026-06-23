@@ -1,0 +1,188 @@
+<div class="active-issues-container">
+    
+  <!-- Page Header -->
+  <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 class="page-title"><i class="fa fa-refresh"></i> Active Issues &amp; Returns</h1>
+      <p class="page-subtitle">Manage currently checked out books, process returns, or send reminders.</p>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-grow: 1; max-width: 500px; justify-content: flex-end;">
+      <button class="btn-modern btn-success" (click)="exportExcel()" style="white-space: nowrap;">
+        <i class="fa fa-file-excel-o"></i>
+        <span style="margin-left: 0.5rem;">Export Excel</span>
+      </button>
+      <button class="btn-modern btn-warning" [disabled]="!anySelected || isSendingReminder" (click)="sendReminder()">
+        <i class="fa fa-envelope" *ngIf="!isSendingReminder"></i>
+        <i class="fa fa-spinner fa-spin" *ngIf="isSendingReminder"></i>
+        <span style="margin-left: 0.5rem;">Send Reminder to Selected</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Table Controls Strip -->
+  <div class="surface-card" style="margin-bottom: 1rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div style="flex: 1; max-width: 400px; position: relative;">
+      <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+      <input 
+        type="text" 
+        class="input-modern" 
+        style="padding-left: 2.5rem; width: 100%;" 
+        placeholder="Search by Employee, Book Title, Accession..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchChange()">
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label style="font-weight: 500; font-size: 0.9rem;">Per page:</label>
+        <select class="input-modern" style="padding: 0.25rem 2rem 0.25rem 0.5rem; height: auto;" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+          <option [ngValue]="500">500</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Card -->
+  <div class="issues-table-card surface-card">
+    <div class="table-responsive">
+      <table class="issues-table data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">
+              <input type="checkbox" [checked]="allSelected" (change)="toggleAll($event)">
+            </th>
+            <th style="width: 90px;">Issue #</th>
+            <th>Book Title</th>
+            <th>Issued To</th>
+            <th>Issue Date</th>
+            <th>Days Since Issue</th>
+            <th>Due Date</th>
+            <th style="text-align: right; width: 220px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dynamic Row -->
+          <tr *ngFor="let item of paginatedIssues" [class.highlighted-row]="item.issueNumber == highlightedIssueNumber">
+            <td style="text-align: center;">
+              <input type="checkbox" [(ngModel)]="item.selected">
+            </td>
+            <td>
+              <span class="issue-number-badge">#{{ item.issueNumber }}</span>
+            </td>
+            <td>
+              <div class="book-title-cell" [title]="item.bookName" style="display: flex; align-items: center; gap: 0.5rem;">
+                <img *ngIf="item.coverImagePath" [src]="item.coverImagePath.startsWith('http') ? item.coverImagePath : catalogBaseUrl + item.coverImagePath" style="width: 30px; height: 40px; object-fit: cover; border-radius: 4px;" alt="Book">
+                <i *ngIf="!item.coverImagePath" class="fa fa-book" style="color: var(--primary-mid); margin-right: 0.4rem;"></i>
+                {{ item.bookName }}
+              </div>
+            </td>
+            <td>
+              <div class="employee-cell" style="display: flex; align-items: center; gap: 0.5rem;">
+                <img *ngIf="item.employeeImagePath" [src]="(item.employeeImagePath.startsWith('http') || item.employeeImagePath.startsWith('data:')) ? item.employeeImagePath : catalogBaseUrl + item.employeeImagePath" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="Emp">
+                <div *ngIf="!item.employeeImagePath" style="width: 32px; height: 32px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;">{{ item.empName ? item.empName.charAt(0) : '?' }}</div>
+                <div>
+                  <span class="employee-name" style="display: block;">{{ item.empName }}</span>
+                  <span class="employee-id" style="display: block; font-size: 0.75rem; color: var(--text-muted);"><i class="fa fa-id-card-o"></i> {{ item.empId || item.empID }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="date-cell text-muted">
+                <i class="fa fa-calendar-o" style="margin-right: 0.35rem;"></i>
+                {{ item.issueDate }}
+              </span>
+            </td>
+            <td>
+              <span class="reissue-badge" [class.overdue]="item.daysSinceIssue > 14">
+                {{ item.daysSinceIssue }} days
+              </span>
+            </td>
+            <td>
+              <!-- Overdue pill logic -->
+              <span 
+                class="due-date-badge" 
+                [class.overdue]="isOverdue(item.dueDate)" 
+                [class.normal]="!isOverdue(item.dueDate)">
+                <i class="fa fa-warning" *ngIf="isOverdue(item.dueDate)"></i>
+                <i class="fa fa-clock-o" *ngIf="!isOverdue(item.dueDate)"></i>
+                <span>{{ item.dueDate }}</span>
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div class="btn-action-group" style="justify-content: flex-end;">
+                <!-- Return Button -->
+                <button 
+                  class="btn-modern btn-primary btn-action-table btn-sm" 
+                  (click)="returnBook(item.issueNumber)"
+                  title="Return Book">
+                  <i class="fa fa-check"></i>
+                </button>
+                <!-- Reissue Button -->
+                <button 
+                  class="btn-modern btn-secondary btn-action-table btn-sm" 
+                  (click)="reissueBook(item.issueNumber)"
+                  title="Reissue Book">
+                  <i class="fa fa-history"></i>
+                </button>
+                <!-- Email Reminder Button -->
+                <button 
+                  class="btn-modern btn-warning btn-action-table btn-sm" 
+                  (click)="sendReminder(item)"
+                  title="Send Reminder Email">
+                  <i class="fa fa-envelope"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Empty State Row -->
+          <tr *ngIf="paginatedIssues.length === 0 && !isLoading">
+            <td colspan="7">
+              <div class="empty-table-state" style="text-align: center; padding: 2rem;">
+                <i class="fa fa-folder-open-o" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 1rem; display: block;"></i>
+                <h4>No issues found</h4>
+                <p class="text-muted">No records match your search criteria.</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Loading Row -->
+          <tr *ngIf="isLoading">
+            <td colspan="7">
+              <div class="empty-table-state" style="padding: 3rem 2rem; text-align: center;">
+                <i class="fa fa-circle-o-notch fa-spin" style="color: var(--primary); font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+                <h4>Loading active issues...</h4>
+                <p>Retrieving active book checkouts from the database.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-footer" *ngIf="!isLoading && filteredIssues.length > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--bg-surface);">
+      <div class="pagination-info" style="color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 1rem;">
+        <span>
+          Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ (currentPage * pageSize > filteredIssues.length) ? filteredIssues.length : (currentPage * pageSize) }} of {{ filteredIssues.length }} entries
+        </span>
+      </div>
+      <div class="pagination-controls" style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="btn-modern btn-secondary btn-sm" (click)="prevPage()" [disabled]="currentPage === 1">
+          <i class="fa fa-chevron-left"></i> Prev
+        </button>
+        <span style="font-size: 0.9rem; font-weight: 600; padding: 0 0.5rem;">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button class="btn-modern btn-secondary btn-sm" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          Next <i class="fa fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+

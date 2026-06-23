@@ -1,0 +1,208 @@
+<div class="issue-book-wrapper">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">
+        <i class="fa fa-arrow-circle-right"></i> Issue a {{ itemType }}
+      </h1>
+      <p class="page-subtitle">Search for the {{ itemType.toLowerCase() }} and employee, then assign the {{ itemType.toLowerCase() }}.</p>
+    </div>
+  </div>
+
+  <div class="surface-card" style="overflow: hidden;">
+
+    <!-- Form -->
+    <form (ngSubmit)="issueBook()" class="issue-book-form">
+
+      <div class="form-grid">
+      
+        <!-- Item Type Selection -->
+        <div class="field-group field-full" style="flex-direction: row; justify-content: flex-start; align-items: center; margin-bottom: 1rem; background-color: var(--bg-body); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <label style="font-weight: 600; color: var(--text-secondary); margin-right: 1rem; font-size: 0.9rem;">
+            <i class="fa fa-filter"></i> Select Item Type to Issue:
+          </label>
+          <div style="display: flex; gap: 1.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.95rem; font-weight: 500;">
+              <input type="radio" name="itemType" value="Book" [(ngModel)]="itemType" (change)="searchBooksTerm=''; searchResultsBooks=[]; showBookDropdown=false; bookName=''; anum=''; bookAvailableCopies=0;" style="width: 1rem; height: 1rem; accent-color: var(--primary);">
+              <i class="fa fa-book" style="color: var(--text-muted);"></i> Book
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.95rem; font-weight: 500;">
+              <input type="radio" name="itemType" value="Magazine" [(ngModel)]="itemType" (change)="searchBooksTerm=''; searchResultsBooks=[]; showBookDropdown=false; bookName=''; anum=''; bookAvailableCopies=0;" style="width: 1rem; height: 1rem; accent-color: var(--primary);">
+              <i class="fa fa-newspaper-o" style="color: var(--text-muted);"></i> Magazine
+            </label>
+          </div>
+        </div>
+
+        <!-- Book Search Autocomplete -->
+        <div class="field-group" style="position: relative;">
+          <label class="field-label">
+            <i class="fa" [ngClass]="itemType === 'Book' ? 'fa-book' : 'fa-newspaper-o'"></i> Search {{ itemType }}
+          </label>
+          <div class="input-with-icon" style="position: relative;">
+            <i class="fa icon-left" [ngClass]="itemType === 'Book' ? 'fa-book' : 'fa-newspaper-o'" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+            <input
+              type="text"
+              [ngModel]="searchBooksTerm"
+              (ngModelChange)="onBookSearchChange($event)"
+              name="searchBooksTerm"
+              class="input-modern"
+              style="padding-left: 2.5rem;"
+              placeholder="Search by Title or Author..."
+              autocomplete="off" />
+            <i class="fa fa-spinner fa-spin icon-right" *ngIf="isSearchingBooks" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary);"></i>
+            
+            <div class="autocomplete-dropdown" *ngIf="showBookDropdown && searchResultsBooks.length > 0">
+              <div class="autocomplete-item" *ngFor="let book of searchResultsBooks" (click)="selectBook(book)">
+                <div style="font-weight: 500;">{{ book.Book_name || book.book_name || book.Title || book.title }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                  {{ book.Book_author || book.book_author || book.Publisher || book.publisher }} &bull; Accession: {{ book.Anum || book.anum || book.MagazineId || book.magazineId }}
+                </div>
+              </div>
+            </div>
+            <div class="autocomplete-dropdown" *ngIf="showBookDropdown && searchResultsBooks.length === 0 && !isSearchingBooks">
+              <div class="autocomplete-item" style="color: var(--text-secondary); text-align: center;">No items found.</div>
+            </div>
+            
+            <div *ngIf="bookName" class="selection-badge">
+              <span class="badge-text">{{ bookName }} ({{ anum }})</span>
+              <button type="button" class="badge-clear" (click)="bookName = ''; anum = ''; searchBooksTerm = ''">&times;</button>
+            </div>
+          </div>
+          
+          <!-- Availability / Inventory Indicator -->
+          <div *ngIf="bookName" style="margin-top: 0.75rem; font-size: 0.85rem; display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem; border-radius: var(--radius-sm);" 
+               [ngStyle]="{'background-color': bookAvailableCopies > 0 ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)', 'color': bookAvailableCopies > 0 ? 'var(--success)' : 'var(--danger)'}">
+            <i class="fa" [ngClass]="bookAvailableCopies > 0 ? 'fa-check-circle' : 'fa-exclamation-triangle'" style="margin-top: 0.15rem;"></i>
+            <div style="flex: 1;">
+              <span *ngIf="bookAvailableCopies > 0"><strong>Inventory:</strong> {{ bookAvailableCopies }} copies available to issue.</span>
+              <div *ngIf="bookAvailableCopies <= 0">
+                <span><strong>Warning:</strong> 0 copies available. Cannot issue.</span>
+                <div *ngIf="bookActiveIssues && bookActiveIssues.length > 0" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed rgba(220, 53, 69, 0.3);">
+                  <span style="font-weight: 600; display: block; margin-bottom: 0.25rem; color: var(--danger);">Currently issued to:</span>
+                  <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.8rem; list-style-type: disc; color: var(--danger);">
+                    <li *ngFor="let actIssue of bookActiveIssues">
+                      <strong>{{ actIssue.empName || actIssue.EmpName }}</strong> ({{ actIssue.empID || actIssue.EmpID }})
+                      since {{ (actIssue.issueDate || actIssue.IssueDate) | date:'mediumDate' }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employee Search Autocomplete -->
+        <div class="field-group" style="position: relative;">
+          <label class="field-label">
+            <i class="fa fa-search"></i> Search Employee
+          </label>
+          <div class="input-with-icon" style="position: relative;">
+            <i class="fa fa-user icon-left" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+            <input
+              type="text"
+              [ngModel]="searchEmpTerm"
+              (ngModelChange)="onEmpSearchChange($event)"
+              name="searchEmpTerm"
+              class="input-modern"
+              style="padding-left: 2.5rem;"
+              placeholder="Search by Employee Email..."
+              autocomplete="off" />
+            <i class="fa fa-spinner fa-spin icon-right" *ngIf="isSearchingEmp" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary);"></i>
+            
+            <div class="autocomplete-dropdown" *ngIf="showEmpDropdown && searchResultsEmp.length > 0">
+              <div class="autocomplete-item" *ngFor="let emp of searchResultsEmp" (click)="selectEmployee(emp)">
+                <div style="font-weight: 500;">{{ emp.empName || emp.EmpName }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                  Email: {{ emp.emailid }} | Dept: {{ emp.department || emp.Department }}
+                </div>
+              </div>
+            </div>
+            <div class="autocomplete-dropdown" *ngIf="showEmpDropdown && searchResultsEmp.length === 0 && !isSearchingEmp">
+              <div class="autocomplete-item" style="color: var(--text-secondary); text-align: center;">No employees found.</div>
+            </div>
+            
+            <div *ngIf="empName" class="selection-badge" style="background: var(--secondary); color: var(--secondary-foreground);">
+              <span class="badge-text">{{ empName }} ({{ empId }})</span>
+              <button type="button" class="badge-clear" (click)="empName = ''; empId = ''; searchEmpTerm = ''">&times;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Employee Details -->
+        <div class="field-group">
+          <label class="field-label">
+            <i class="fa fa-user-circle"></i> Selected Employee
+          </label>
+          <div class="verified-field" [class.verified]="empName">
+            <input
+              type="text"
+              [value]="empName ? empName + ' (' + empId + ')' : ''"
+              disabled
+              class="input-modern"
+              placeholder="Select an employee to auto-fill" />
+            <span class="verified-badge" *ngIf="empName">
+              <i class="fa fa-check-circle"></i> Verified
+            </span>
+          </div>
+        </div>
+
+        <!-- Employee Active Issues -->
+        <div class="field-group field-full" *ngIf="empName && (isFetchingEmpIssues || employeeActiveIssues.length > 0)">
+          <div style="margin-top: 0.5rem; padding: 1rem; background-color: var(--bg-body); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            
+            <div *ngIf="isFetchingEmpIssues" style="font-size: 0.9rem; color: var(--text-secondary);">
+              <i class="fa fa-spinner fa-spin"></i> Checking existing issues for {{ empName }}...
+            </div>
+            
+            <div *ngIf="!isFetchingEmpIssues && employeeActiveIssues.length > 0">
+              <h4 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: var(--text-primary);">
+                <i class="fa fa-info-circle text-primary"></i> 
+                {{ empName }} currently has {{ employeeActiveIssues.length }} {{ employeeActiveIssues.length === 1 ? 'item' : 'items' }} issued:
+              </h4>
+              <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                <li *ngFor="let issue of employeeActiveIssues" style="margin-bottom: 0.25rem;">
+                  <strong>{{ issue.bookName || issue.BookName }}</strong> 
+                  (Issue #: {{ issue.issueNumber || issue.IssueNumber }}, Date: {{ (issue.issueDate || issue.IssueDate) | date:'mediumDate' }})
+                </li>
+              </ul>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- Issue Date -->
+        <div class="field-group">
+          <label class="field-label">
+            <i class="fa fa-calendar-plus-o"></i> Issue Date
+          </label>
+          <input
+            type="date"
+            [(ngModel)]="issueDate"
+            name="issueDate"
+            class="input-modern"
+            required />
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions" style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+        <button type="button" class="btn-modern btn-ghost" (click)="resetForm()">
+          Clear
+        </button>
+        <button
+          type="submit"
+          class="btn-modern btn-primary btn-lg"
+          [disabled]="isIssuing || !anum || !empId || !bookName || !empName || bookAvailableCopies <= 0">
+          <span *ngIf="!isIssuing">
+            <i class="fa fa-arrow-circle-right"></i> Issue {{ itemType }}
+          </span>
+          <span *ngIf="isIssuing">
+            <i class="fa fa-spinner fa-spin"></i> Issuing...
+          </span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+# IDEs and editors
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build outputs (.NET)
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+[Oo]fflineStaging/
+[Ll]ocalStaging/
+ProductionBackup/
+
+# Build outputs (Angular / Node)
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp*
+.pnp.js
+
+# Logs
+logs/
+*.log
+
+# Zip packages and backups
+*.zip
+*.tar.gz
+*.rar
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

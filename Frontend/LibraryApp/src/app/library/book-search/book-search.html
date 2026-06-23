@@ -1,0 +1,222 @@
+<div class="book-search-container" style="padding-bottom: 2rem;">
+    
+  <!-- Search Banner Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fa fa-search"></i> Book Search</h1>
+      <p class="page-subtitle">Discover books by title, author, or category and check real-time availability.</p>
+    </div>
+  </div>
+
+  <!-- Filters Card Panel -->
+  <div class="filters-card">
+    <div class="filters-row">
+      
+      <!-- Keyword Input -->
+      <div class="input-group" style="flex: 2; min-width: 250px;">
+        <label class="field-label" style="font-weight: 600; margin-bottom: 0.25rem; display: block; color: var(--text-secondary); font-size: 0.85rem;">
+          Search Keyword
+        </label>
+        <div class="filter-input-wrapper">
+          <i class="fa fa-search"></i>
+          <input 
+            type="text" 
+            class="input-modern" 
+            [(ngModel)]="keyword" 
+            (ngModelChange)="onSearchChange()" 
+            placeholder="Title, Author, or ISBN..." />
+        </div>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="input-group" style="flex: 1; min-width: 200px;">
+        <label class="field-label" style="font-weight: 600; margin-bottom: 0.25rem; display: block; color: var(--text-secondary); font-size: 0.85rem;">
+          Category Filter
+        </label>
+        <div class="filter-input-wrapper">
+          <i class="fa fa-tags" style="z-index: 10;"></i>
+          <select 
+            class="input-modern" 
+            [(ngModel)]="category" 
+            (ngModelChange)="onSearchChange()"
+            style="padding-left: 2.5rem; cursor: pointer;">
+            <option value="">All Categories</option>
+            <option *ngFor="let cat of availableCategories" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Per Page Dropdown -->
+      <div class="input-group" style="flex: 0; min-width: 150px;">
+        <label class="field-label" style="font-weight: 600; margin-bottom: 0.25rem; display: block; color: var(--text-secondary); font-size: 0.85rem;">
+          Per Page
+        </label>
+        <div class="filter-input-wrapper">
+          <i class="fa fa-list-ol" style="z-index: 10;"></i>
+          <select 
+            class="input-modern" 
+            [(ngModel)]="pageSize" 
+            (ngModelChange)="onPageSizeChange()"
+            style="padding-left: 2.5rem; cursor: pointer;">
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="20">20</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+            <option [ngValue]="500">500</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div style="display: flex; align-items: flex-end;">
+        <button 
+          class="btn-modern btn-primary" 
+          (click)="searchBooks()" 
+          [disabled]="isLoading"
+          style="height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 1.5rem; font-weight: 600; gap: 0.5rem; box-shadow: var(--shadow-primary);">
+          <i class="fa fa-refresh fa-spin" *ngIf="isLoading"></i>
+          <i class="fa fa-search" *ngIf="!isLoading"></i>
+          <span>Search</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Cards Grid View -->
+  <div class="cards-grid" *ngIf="filteredBooks.length > 0">
+    <div class="book-card" *ngFor="let book of pagedBooks">
+      
+      <!-- Top Cover Image or 3D Typographic Spine Fallback Cover -->
+      <div class="book-cover-wrapper">
+        <ng-container *ngIf="book.CoverImagePath || book.coverImagePath; else fallbackCover">
+          <img 
+            [src]="(book.CoverImagePath || book.coverImagePath).startsWith('http') ? (book.CoverImagePath || book.coverImagePath) : documentBaseUrl + (book.CoverImagePath || book.coverImagePath)" 
+            alt="Cover" 
+            class="book-cover-img" />
+        </ng-container>
+        <ng-template #fallbackCover>
+          <div class="book-cover-placeholder" [style.background]="getPlaceholderGradient(book)">
+            <span class="cover-category-badge">
+              {{ book.Book_category || book.BookCategory || book.book_category || book.category || 'General' }}
+            </span>
+            <div class="cover-title-text">
+              {{ book.Book_name || book.BookName || book.book_name }}
+            </div>
+            <div class="cover-author-text">
+              <i class="fa fa-pencil-square-o"></i>
+              {{ book.Book_author || book.BookAuthor || book.book_author || 'Unknown' }}
+            </div>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Card Main Body Info -->
+      <div class="book-card-body">
+        <h3 class="book-title-main" [title]="book.Book_name || book.BookName || book.book_name">
+          {{ book.Book_name || book.BookName || book.book_name }}
+        </h3>
+        
+        <ul class="book-meta-list">
+          <li class="book-meta-item">
+            <i class="fa fa-pencil"></i>
+            <span>By <strong>{{ book.Book_author || book.BookAuthor || book.book_author || 'Unknown Author' }}</strong></span>
+          </li>
+          <li class="book-meta-item" *ngIf="book.ISBN || book.isbn">
+            <i class="fa fa-barcode"></i>
+            <span>ISBN: <strong>{{ book.ISBN || book.isbn }}</strong></span>
+          </li>
+          <li class="book-meta-item" *ngIf="book.Publisher || book.publisher">
+            <i class="fa fa-building-o"></i>
+            <span>Publisher: <strong>{{ book.Publisher || book.publisher }}</strong> <span *ngIf="book.Edition || book.edition">({{ book.Edition || book.edition }})</span></span>
+          </li>
+          <li class="book-meta-item">
+            <i class="fa fa-tag"></i>
+            <span>Category: <strong>{{ book.Book_category || book.BookCategory || book.book_category || book.category || 'General' }}</strong></span>
+          </li>
+          <li class="book-meta-item" *ngIf="book.Book_class || book.book_class">
+            <i class="fa fa-bookmark-o"></i>
+            <span>Classification: <strong>{{ book.Book_class || book.book_class }}</strong></span>
+          </li>
+        </ul>
+
+        <!-- Location Badge Tag -->
+        <div class="shelf-location-tag">
+          <i class="fa fa-map-marker"></i>
+          <span>Rack Location: <strong>{{ book.Book_rack || book.book_rack || '—' }}</strong></span>
+        </div>
+      </div>
+
+      <!-- Footer Action Block -->
+      <div class="book-card-footer">
+        
+        <!-- Status Indicator Pill -->
+        <span 
+          class="status-badge" 
+          [class.available]="book.Available || book.available" 
+          [class.issued]="!(book.Available || book.available)">
+          <i class="fa fa-check-circle" *ngIf="book.Available || book.available"></i>
+          <i class="fa fa-times-circle" *ngIf="!(book.Available || book.available)"></i>
+          <span>{{ (book.Available || book.available) ? 'Available' : 'Issued' }}</span>
+        </span>
+
+        <!-- Reservation CTA -->
+        <button 
+          *ngIf="!(book.Available || book.available)"
+          class="btn-modern btn-secondary btn-reserve"
+          (click)="reserveBook(book.Anum || book.anum)">
+          <i class="fa fa-bookmark-o"></i>
+          <span>Reserve</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty Results / Not Found States -->
+  <div class="search-empty-state" *ngIf="filteredBooks.length === 0 && !isLoading">
+    <i class="fa fa-folder-open-o"></i>
+    <h3>No books found</h3>
+    <p>We couldn't find any books matching your criteria. Try adjusting your keyword search or category filter.</p>
+  </div>
+
+  <!-- Loading Skeletons State -->
+  <div class="search-empty-state" *ngIf="isLoading" style="border-style: solid;">
+    <i class="fa fa-circle-o-notch fa-spin" style="color: var(--primary); font-size: 2.5rem;"></i>
+    <h3>Searching Library Catalog...</h3>
+    <p>Fetching matching book records and real-time availability status.</p>
+  </div>
+
+  <!-- Pagination Foot Controls -->
+  <div class="surface-card" *ngIf="filteredBooks.length > 0" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding: 1.25rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+    <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+      Showing <strong style="color: var(--text-main);">{{ (currentPage - 1) * pageSize + 1 }}</strong> to 
+      <strong style="color: var(--text-main);">{{ (currentPage * pageSize) > filteredBooks.length ? filteredBooks.length : (currentPage * pageSize) }}</strong> 
+      of <strong style="color: var(--text-main);">{{ filteredBooks.length }}</strong> matching volumes
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button 
+        class="btn-modern btn-secondary" 
+        style="padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.4rem; height: 36px; font-weight: 600;" 
+        (click)="prevPage()" 
+        [disabled]="currentPage === 1">
+        <i class="fa fa-chevron-left"></i> <span>Prev</span>
+      </button>
+      
+      <span style="font-weight: 600; font-size: 0.85rem; margin: 0 0.75rem; color: var(--text-secondary);">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+      
+      <button 
+        class="btn-modern btn-secondary" 
+        style="padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.4rem; height: 36px; font-weight: 600;" 
+        (click)="nextPage()" 
+        [disabled]="currentPage === totalPages">
+        <span>Next</span> <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+</div>
+

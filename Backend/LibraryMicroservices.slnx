@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="ApiGateway/ApiGateway.csproj" />
+  <Project Path="Auth.Service/Auth.Service.csproj" />
+  <Project Path="Catalog.Service/Catalog.Service.csproj" />
+  <Project Path="Document.Service/Document.Service.csproj" />
+  <Project Path="Operations.Service/Operations.Service.csproj" />
+  <Project Path="Shared.Core/Shared.Core.csproj" />
+  <Project Path="Shared.Infrastructure/Shared.Infrastructure.csproj" />
+</Solution>

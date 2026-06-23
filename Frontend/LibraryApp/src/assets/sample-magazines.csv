@@ -1,0 +1,6 @@
+MagazineId,Title,Publisher,IssueDate,RackLocation,Category,TotalCopies,CoverImage (Optional)
+1001,National Geographic,NatGeo Society,Oct-2023,A1,Science & Nature,10,natgeo_oct2023.jpg
+1002,TIME Magazine,TIME USA,Nov-2023,A2,News & Politics,15,time_nov2023.jpg
+1003,Forbes,Forbes Media,Dec-2023,B1,Business,5,
+1004,Vogue,Condé Nast,Jan-2024,C1,Fashion,8,vogue_jan2024.png
+1005,The New Yorker,Condé Nast,Feb-2024,B2,Culture,12,

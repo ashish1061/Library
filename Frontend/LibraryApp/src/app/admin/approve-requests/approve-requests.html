@@ -1,0 +1,124 @@
+<div class="manage-books-container">
+  <div class="page-header">
+      <div>
+          <h1 class="page-title"><i class="fa fa-check-square-o"></i> Approve Issue Requests</h1>
+          <p class="page-subtitle">Review pending requests from employees and issue items in bulk.</p>
+      </div>
+      <div style="display: flex; gap: 1rem; align-items: center;">
+          <button class="btn-modern btn-primary" (click)="approveSelected()" [disabled]="isProcessing || !hasSelected">
+              <i class="fa" [ngClass]="{'fa-refresh fa-spin': isProcessing, 'fa-check': !isProcessing}"></i>
+              <span style="margin-left: 0.5rem;">Approve Selected</span>
+          </button>
+          <button class="btn-modern" (click)="rejectSelected()" [disabled]="isProcessing || !hasSelected" style="background-color: var(--danger); color: white; border: none; box-shadow: var(--shadow-sm);">
+              <i class="fa fa-times"></i>
+              <span style="margin-left: 0.5rem;">Reject Selected</span>
+          </button>
+      </div>
+  </div>
+
+  <div class="surface-card" style="margin-bottom: 1rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex: 1; max-width: 400px; position: relative;">
+          <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+          <input type="text" class="input-modern" placeholder="Search by EmpID, Name, Item Name..." [(ngModel)]="keyword" (ngModelChange)="onSearchChange()" style="padding-left: 2.5rem; width: 100%;">
+      </div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+          <button class="btn-modern btn-ghost" (click)="loadPendingRequests()" [disabled]="isLoading" style="color: var(--primary);">
+              <i class="fa" [ngClass]="{'fa-refresh fa-spin': isLoading, 'fa-refresh': !isLoading}"></i>
+              <span style="margin-left: 0.5rem;">Refresh</span>
+          </button>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label style="font-weight: 500; font-size: 0.9rem;">Per page:</label>
+              <select class="input-modern" style="padding: 0.25rem 2rem 0.25rem 0.5rem; height: auto;" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+                  <option [ngValue]="10">10</option>
+                  <option [ngValue]="20">20</option>
+                  <option [ngValue]="50">50</option>
+                  <option [ngValue]="100">100</option>
+                  <option [ngValue]="500">500</option>
+              </select>
+          </div>
+      </div>
+  </div>
+
+  <div class="surface-card" style="padding: 0; overflow-x: auto;">
+      <div class="table-responsive">`n<table class="data-table">
+          <thead>
+              <tr>
+                  <th style="width: 50px; text-align: center;">
+                      <input type="checkbox" [checked]="allSelected" (change)="toggleAll($event)">
+                  </th>
+                  <th>Request Date</th>
+                  <th>Employee</th>
+                  <th>Item Type</th>
+                  <th>Item Name</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr *ngIf="filteredRequests.length === 0">
+                  <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                      <i class="fa fa-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                      No pending requests found.
+                  </td>
+              </tr>
+              <tr *ngFor="let req of pagedRequests" style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+                  <td style="padding: 0.5rem; text-align: center;">
+                      <input type="checkbox" [(ngModel)]="req.selected">
+                  </td>
+                  <td style="padding: 0.5rem;">
+                      {{ req.requestDate | date:'mediumDate' }}
+                  </td>
+                  <td style="padding: 0.5rem;">
+                      <div style="display: flex; align-items: center; gap: 0.75rem;">
+                          <img *ngIf="req.employeeImagePath" [src]="req.employeeImagePath.startsWith('http') ? req.employeeImagePath : documentBaseUrl + req.employeeImagePath" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="Avatar">
+                          <div *ngIf="!req.employeeImagePath" style="width: 32px; height: 32px; border-radius: 50%; background: var(--bg-body); display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--text-main); font-size: 0.75rem;">
+                              {{ req.empName?.substring(0, 2) | uppercase }}
+                          </div>
+                          <div>
+                              <div style="font-weight: 600; color: var(--text-main);">{{ req.empName }}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: {{ req.empID }}</div>
+                          </div>
+                      </div>
+                  </td>
+                  <td style="padding: 0.5rem;">
+                      <span class="status-badge" [ngClass]="req.itemType === 'Magazine' ? 'issued' : 'available'">
+                          {{ req.itemType }}
+                      </span>
+                  </td>
+                  <td style="padding: 0.5rem;">
+                      <div style="display: flex; align-items: center; gap: 0.75rem;">
+                          <img *ngIf="req.coverImagePath" [src]="req.coverImagePath.startsWith('http') ? req.coverImagePath : documentBaseUrl + req.coverImagePath" style="width: 32px; height: 45px; object-fit: cover; border-radius: var(--radius-sm);" alt="Cover">
+                          <div>
+                              <div style="font-weight: 600; color: var(--text-main);">{{ req.itemName }}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">Item ID: {{ req.itemID }}</div>
+                          </div>
+                      </div>
+                  </td>
+              </tr>
+          </tbody>
+      </table>
+</div>
+  </div>
+
+  <div class="surface-card" *ngIf="filteredRequests.length > 0" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 1rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+      <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+          Showing <strong style="color: var(--text-main);">{{ (currentPage - 1) * pageSize + 1 }}</strong> to 
+          <strong style="color: var(--text-main);">{{ (currentPage * pageSize) > filteredRequests.length ? filteredRequests.length : (currentPage * pageSize) }}</strong> 
+          of <strong style="color: var(--text-main);">{{ filteredRequests.length }}</strong> requests
+      </div>
+      
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button class="btn-modern btn-secondary" style="padding: 0.4rem 1rem; height: 36px;" (click)="prevPage()" [disabled]="currentPage === 1">
+              <i class="fa fa-chevron-left"></i> <span>Prev</span>
+          </button>
+          
+          <span style="font-weight: 600; font-size: 0.85rem; margin: 0 0.75rem; color: var(--text-secondary);">
+              Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          
+          <button class="btn-modern btn-secondary" style="padding: 0.4rem 1rem; height: 36px;" (click)="nextPage()" [disabled]="currentPage === totalPages">
+              <span>Next</span> <i class="fa fa-chevron-right"></i>
+          </button>
+      </div>
+  </div>
+</div>
+
+

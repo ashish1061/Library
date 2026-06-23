@@ -1,0 +1,236 @@
+<div class="my-history-container" style="padding-bottom: 2rem;">
+  
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fa fa-history"></i> My Borrowing History</h1>
+      <p class="page-subtitle">Track your current active issues, overdue alerts, and past returned items.</p>
+    </div>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 1.5rem;">
+    <!-- Stat 1 -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <h3 class="stat-label">Active Checkouts</h3>
+        <div class="stat-icon icon-blue">
+          <i class="fa fa-book"></i>
+        </div>
+      </div>
+      <p class="stat-value">{{ activeIssues.length }}</p>
+      <p class="stat-trend text-muted">Currently in your possession</p>
+    </div>
+
+    <!-- Stat 2 -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <h3 class="stat-label">Overdue Alerts</h3>
+        <div class="stat-icon icon-red" [class.active-alert]="getOverdueCount() > 0">
+          <i class="fa fa-exclamation-triangle"></i>
+        </div>
+      </div>
+      <p class="stat-value" [class.text-danger]="getOverdueCount() > 0">{{ getOverdueCount() }}</p>
+      <p class="stat-trend" [ngClass]="getOverdueCount() > 0 ? 'text-danger' : 'text-success'" style="font-weight: 500;">
+        {{ getOverdueCount() > 0 ? 'Action Required' : 'Clean Record' }}
+      </p>
+    </div>
+
+    <!-- Stat 3 -->
+    <div class="stat-card">
+      <div class="stat-header">
+        <h3 class="stat-label">Returned Books</h3>
+        <div class="stat-icon icon-purple">
+          <i class="fa fa-check-circle"></i>
+        </div>
+      </div>
+      <p class="stat-value">{{ pastIssues.length }}</p>
+      <p class="stat-trend text-muted">All-time reading history</p>
+    </div>
+  </div>
+
+  <!-- ACTIVE CHECKOUTS PANEL -->
+  <div class="surface-card mb-4" style="padding: 0; overflow: hidden; margin-top: 1.5rem;">
+    <div class="table-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; background: #fafafa;">
+      <h3 class="table-title" style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
+        <i class="fa fa-bookmark" style="color: var(--primary);"></i> Active Checkouts
+      </h3>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Book / Magazine Name</th>
+            <th>Type</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Days Kept</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoadingActive">
+            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+              <i class="fa fa-circle-o-notch fa-spin"></i> Loading your active checkouts...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingActive && activeIssues.length === 0">
+            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+              <i class="fa fa-folder-open-o fa-2x" style="display: block; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+              No active checkouts found. Search for books to request an issue!
+            </td>
+          </tr>
+          <tr *ngFor="let item of activeIssues">
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <img *ngIf="item.coverImagePath" [src]="item.coverImagePath.startsWith('http') ? item.coverImagePath : catalogBaseUrl + item.coverImagePath" style="width: 32px; height: 44px; object-fit: cover; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" alt="Cover">
+                <div *ngIf="!item.coverImagePath" style="width: 32px; height: 44px; background: #f1f5f9; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                  <i class="fa fa-book" style="color: #94a3b8;"></i>
+                </div>
+                <div style="font-weight: 550; color: #1e293b;">{{ item.bookName }}</div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="item.itemType === 'Magazine' ? 'issued' : 'available'">
+                {{ item.itemType }}
+              </span>
+            </td>
+            <td>{{ item.issueDate | date:'yyyy-MM-dd' }}</td>
+            <td>
+              <div style="font-weight: 550;" [class.text-danger]="isOverdue(item.dueDate)">
+                {{ item.dueDate | date:'yyyy-MM-dd' }}
+              </div>
+            </td>
+            <td>{{ item.daysSinceIssue }} days</td>
+            <td>
+              <span class="status-badge" [ngClass]="isOverdue(item.dueDate) ? 'rejected' : 'pending'">
+                {{ isOverdue(item.dueDate) ? 'Overdue' : 'Active' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MY ISSUE REQUESTS PANEL -->
+  <div class="surface-card" style="padding: 0; overflow: hidden; margin-top: 1.5rem;">
+    <div class="table-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; background: #fafafa;">
+      <h3 class="table-title" style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
+        <i class="fa fa-envelope-o" style="color: var(--primary);"></i> My Issue Requests
+      </h3>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Book / Magazine Name</th>
+            <th>Type</th>
+            <th>Request Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoadingRequests">
+            <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+              <i class="fa fa-circle-o-notch fa-spin"></i> Loading your requests...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingRequests && myRequests.length === 0">
+            <td colspan="4" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+              <i class="fa fa-paper-plane-o fa-2x" style="display: block; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+              No borrow requests found.
+            </td>
+          </tr>
+          <tr *ngFor="let item of myRequests">
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <img *ngIf="item.coverImagePath" [src]="item.coverImagePath.startsWith('http') ? item.coverImagePath : catalogBaseUrl + item.coverImagePath" style="width: 30px; height: 40px; object-fit: cover; border-radius: 4px;" alt="Cover">
+                <div *ngIf="!item.coverImagePath" style="width: 30px; height: 40px; background: #f1f5f9; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                  <i class="fa fa-book" style="color: #94a3b8;"></i>
+                </div>
+                <div style="font-weight: 550; color: #1e293b;">{{ item.itemName }}</div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="item.itemType === 'Magazine' ? 'issued' : 'available'">
+                {{ item.itemType }}
+              </span>
+            </td>
+            <td>{{ item.requestDate | date:'yyyy-MM-dd' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="{
+                'pending': item.status === 'Pending',
+                'available': item.status === 'Approved',
+                'rejected': item.status === 'Rejected'
+              }">
+                {{ item.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAST BORROWING HISTORY PANEL -->
+  <div class="surface-card" style="padding: 0; overflow: hidden; margin-top: 1.5rem;">
+    <div class="table-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; background: #fafafa;">
+      <h3 class="table-title" style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: #1e293b;">
+        <i class="fa fa-history" style="color: var(--primary-mid);"></i> Past Borrowing History
+      </h3>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Book / Magazine Name</th>
+            <th>Type</th>
+            <th>Issue Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoadingPast">
+            <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+              <i class="fa fa-circle-o-notch fa-spin"></i> Loading reading history...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingPast && pastIssues.length === 0">
+            <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+              <i class="fa fa-history fa-2x" style="display: block; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+              Your past reading log is empty. Once you return issued books, they will appear here.
+            </td>
+          </tr>
+          <tr *ngFor="let item of pastIssues">
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <img *ngIf="item.coverImagePath" [src]="item.coverImagePath.startsWith('http') ? item.coverImagePath : catalogBaseUrl + item.coverImagePath" style="width: 30px; height: 40px; object-fit: cover; border-radius: 4px;" alt="Cover">
+                <div *ngIf="!item.coverImagePath" style="width: 30px; height: 40px; background: #f1f5f9; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                  <i class="fa fa-book" style="color: #94a3b8;"></i>
+                </div>
+                <div>{{ item.bookName }}</div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="item.itemType === 'Magazine' ? 'issued' : 'available'">
+                {{ item.itemType }}
+              </span>
+            </td>
+            <td>{{ item.issueDate | date:'yyyy-MM-dd' }}</td>
+            <td>{{ item.returnDate | date:'yyyy-MM-dd' }}</td>
+            <td>
+              <span class="status-badge available" style="background-color: #f0fdf4; color: #166534; border-color: #bbf7d0;">
+                Returned
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

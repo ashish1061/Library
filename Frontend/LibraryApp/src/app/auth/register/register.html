@@ -1,0 +1,112 @@
+<div class="register-container">
+  
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title"><i class="fa fa-user-plus"></i> Register New Employee</h1>
+    <p class="page-subtitle">Administrative portal for onboarding new library members.</p>
+  </div>
+
+  <div class="surface-card" style="padding: 1.5rem;">
+
+    
+    <div *ngIf="errorMessage" class="global-error" style="margin-bottom: 1rem; color: #dc3545; background: #f8d7da; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem;">
+      <i class="fa fa-exclamation-circle"></i> {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="success-alert" style="margin-bottom: 1rem; color: #0f5132; background: #d1e7dd; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem;">
+      <i class="fa fa-check-circle"></i> {{ successMessage }}
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group">
+          <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Employee ID</label>
+          <div class="input-wrapper" style="position: relative;">
+            <i class="fa fa-id-badge input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" formControlName="EmpID" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="e.g., E001">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Full Name</label>
+          <div class="input-wrapper" style="position: relative;">
+            <i class="fa fa-user input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" formControlName="EmpName" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="John Doe">
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group">
+          <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Email Address</label>
+          <div class="input-wrapper" style="position: relative;">
+            <i class="fa fa-envelope input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="email" formControlName="Email" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="john@example.com">
+          </div>
+          <div *ngIf="registerForm.get('Email')?.invalid && (registerForm.get('Email')?.dirty || registerForm.get('Email')?.touched)" style="color: #dc3545; font-size: 0.8rem; margin-top: 0.2rem;">
+            <div *ngIf="registerForm.get('Email')?.errors?.['required']">Email is required.</div>
+            <div *ngIf="registerForm.get('Email')?.errors?.['email']">Please enter a valid email address.</div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Mobile Number</label>
+          <div class="input-wrapper" style="position: relative;">
+            <i class="fa fa-phone input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" formControlName="Mobile" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="+1 234 567 8900">
+          </div>
+          <div *ngIf="registerForm.get('Mobile')?.invalid && (registerForm.get('Mobile')?.dirty || registerForm.get('Mobile')?.touched)" style="color: #dc3545; font-size: 0.8rem; margin-top: 0.2rem;">
+            <div *ngIf="registerForm.get('Mobile')?.errors?.['required']">Mobile number is required.</div>
+            <div *ngIf="registerForm.get('Mobile')?.errors?.['pattern']">Must be a valid 10-15 digit phone number.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+        <div class="form-group">
+          <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Department</label>
+          <div class="input-wrapper" style="position: relative;">
+            <i class="fa fa-building input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" formControlName="Department" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="e.g., Engineering">
+          </div>
+          <div *ngIf="registerForm.get('Department')?.invalid && (registerForm.get('Department')?.dirty || registerForm.get('Department')?.touched)" style="color: #dc3545; font-size: 0.8rem; margin-top: 0.2rem;">
+            <div *ngIf="registerForm.get('Department')?.errors?.['required']">Department is required.</div>
+            <div *ngIf="registerForm.get('Department')?.errors?.['pattern']">Department must be a minimum of 2 words.</div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Designation</label>
+          <div class="input-wrapper" style="position: relative;">
+            <i class="fa fa-briefcase input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+            <input type="text" formControlName="Designation" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="e.g., Software Engineer">
+          </div>
+          <div *ngIf="registerForm.get('Designation')?.invalid && (registerForm.get('Designation')?.dirty || registerForm.get('Designation')?.touched)" style="color: #dc3545; font-size: 0.8rem; margin-top: 0.2rem;">
+            <div *ngIf="registerForm.get('Designation')?.errors?.['required']">Designation is required.</div>
+            <div *ngIf="registerForm.get('Designation')?.errors?.['pattern']">Designation must be a minimum of 2 words.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-weight: 600; color: var(--text-color); margin-bottom: 0.25rem;">Initial Password</label>
+        <div class="input-wrapper" style="position: relative;">
+          <i class="fa fa-lock input-icon" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+          <input type="password" formControlName="Password" class="input-modern has-icon" style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-color); transition: all 0.2s;" placeholder="Set a strong temporary password">
+        </div>
+        <div *ngIf="registerForm.get('Password')?.invalid && (registerForm.get('Password')?.dirty || registerForm.get('Password')?.touched)" style="color: #dc3545; font-size: 0.8rem; margin-top: 0.2rem;">
+          <div *ngIf="registerForm.get('Password')?.errors?.['required']">Password is required.</div>
+          <div *ngIf="registerForm.get('Password')?.errors?.['minlength'] || registerForm.get('Password')?.errors?.['pattern']">
+            Must be at least 8 chars with uppercase, lowercase, number & special char.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn-modern btn-primary" style="padding: 0.65rem 1.5rem; font-size: 0.95rem;" [disabled]="registerForm.invalid">
+          <i class="fa fa-user-plus"></i> <span style="margin-left: 0.5rem;">Register Employee</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

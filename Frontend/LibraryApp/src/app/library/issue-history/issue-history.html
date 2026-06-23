@@ -1,0 +1,130 @@
+<div class="issue-history-container">
+    
+  <div class="page-header">
+      <h1 class="page-title"><i class="fa fa-history"></i> Issue History</h1>
+      <p class="page-subtitle">View past book issues and export data to Excel or PDF.</p>
+  </div>
+
+  <div class="ih-controls-card surface-card">
+      <div class="ih-controls-row">
+          <div class="ih-form-group">
+              <label class="ih-label">Start Date</label>
+              <input type="date" class="input-modern" [(ngModel)]="startDate" style="width: 160px;" />
+          </div>
+          <div class="ih-form-group">
+              <label class="ih-label">End Date</label>
+              <input type="date" class="input-modern" [(ngModel)]="endDate" style="width: 160px;" />
+          </div>
+          <button class="btn-modern btn-primary" (click)="search()">
+              <i class="fa fa-search"></i> 
+              <span style="margin-left: 0.25rem;">Search</span>
+          </button>
+          
+          <div class="ih-actions">
+              <button class="btn-modern btn-success" (click)="exportExcel()" style="margin-right: 0.5rem;">
+                  <i class="fa fa-file-excel-o"></i> 
+                  <span>Export Excel</span>
+              </button>
+              <button class="btn-modern btn-secondary" (click)="exportPdf()">
+                  <i class="fa fa-file-pdf-o" style="color: #E24939;"></i> 
+                  <span style="margin-left: 0.25rem;">Export PDF</span>
+              </button>
+              <button class="btn-modern btn-secondary" (click)="exportExcel()" [disabled]="isLoading">
+                  <i class="fa fa-file-excel-o" style="color: #2E7D32;"></i> 
+                  <span style="margin-left: 0.25rem;" *ngIf="!isLoading">Export Excel</span>
+                  <span style="margin-left: 0.25rem;" *ngIf="isLoading">Exporting...</span>
+              </button>
+          </div>
+      </div>
+  </div>
+
+  <div class="surface-card" style="margin-bottom: 1rem; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+    <div style="flex: 1; max-width: 400px; position: relative;">
+      <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+      <input 
+        type="text" 
+        class="input-modern" 
+        style="padding-left: 2.5rem; width: 100%;" 
+        placeholder="Search by Issue #, Book, or Employee..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="onSearchTextChange()">
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label style="font-weight: 500; font-size: 0.9rem;">Per page:</label>
+        <select class="input-modern" style="padding: 0.25rem 2rem 0.25rem 0.5rem; height: auto;" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+          <option [ngValue]="500">500</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="surface-card" style="padding: 0; overflow: hidden;">
+      <div class="table-responsive">`n<table class="data-table">
+          <thead>
+              <tr>
+                  <th>Issue #</th>
+                  <th>Book Name</th>
+                  <th>Type</th>
+                  <th>Issued To</th>
+                  <th>Issue Date</th>
+                  <th>Return Date</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr *ngFor="let item of paginatedHistory">
+                  <td>{{ item.issueNumber }}</td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                      <img *ngIf="item.coverImagePath" [src]="item.coverImagePath.startsWith('http') ? item.coverImagePath : catalogBaseUrl + item.coverImagePath" style="width: 30px; height: 40px; object-fit: cover; border-radius: 4px;" alt="Book">
+                      <i *ngIf="!item.coverImagePath" class="fa fa-book" style="color: var(--primary-mid); margin-right: 0.4rem;"></i>
+                      {{ item.bookName || 'Unknown' }}
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge" [ngClass]="item.itemType === 'Magazine' ? 'issued' : 'available'">
+                      {{ item.itemType || item.ItemType || 'Book' }}
+                    </span>
+                  </td>
+                  <td>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                      <img *ngIf="item.employeeImagePath" [src]="(item.employeeImagePath.startsWith('http') || item.employeeImagePath.startsWith('data:')) ? item.employeeImagePath : catalogBaseUrl + item.employeeImagePath" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" alt="Emp">
+                      <div *ngIf="!item.employeeImagePath" style="width: 32px; height: 32px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;">{{ (item.empName || 'U').charAt(0) }}</div>
+                      {{ item.empName || 'Unknown' }}
+                    </div>
+                  </td>
+                  <td>{{ item.issueDate }}</td>
+                  <td>{{ item.returnDate }}</td>
+              </tr>
+              <tr *ngIf="filteredHistory.length === 0">
+                  <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">No history records found.</td>
+              </tr>
+          </tbody>
+      </table>
+</div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="pagination-footer" *ngIf="totalFilteredLength > 0" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin-top: 1rem; background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--border-color);">
+    <div class="pagination-info" style="color: var(--text-muted); font-size: 0.9rem;">
+      <span>
+        Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ (currentPage * pageSize > totalFilteredLength) ? totalFilteredLength : (currentPage * pageSize) }} of {{ totalFilteredLength }} entries
+      </span>
+    </div>
+    <div class="pagination-controls" style="display: flex; gap: 0.5rem; align-items: center;">
+      <button class="btn-modern btn-secondary btn-sm" (click)="prevPage()" [disabled]="currentPage === 1">
+        <i class="fa fa-chevron-left"></i> Prev
+      </button>
+      <span style="font-size: 0.9rem; font-weight: 600; padding: 0 0.5rem;">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button class="btn-modern btn-secondary btn-sm" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        Next <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+

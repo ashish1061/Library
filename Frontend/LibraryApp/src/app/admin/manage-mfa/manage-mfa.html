@@ -1,0 +1,161 @@
+<div class="manage-mfa-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fa fa-shield"></i> Multi-Factor Authentication (MFA) Settings</h1>
+      <p class="page-subtitle">Configure security settings and disable or enable email-based MFA for users.</p>
+    </div>
+  </div>
+
+  <!-- Stats KPI Summary cards -->
+  <div class="stats-grid">
+    <div class="surface-card stat-card">
+      <div class="stat-icon-wrapper blue">
+        <i class="fa fa-users"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Total Users</span>
+        <span class="stat-value">{{ totalUsersCount }}</span>
+      </div>
+    </div>
+    
+    <div class="surface-card stat-card">
+      <div class="stat-icon-wrapper green">
+        <i class="fa fa-check-circle"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">MFA Enabled</span>
+        <span class="stat-value">{{ mfaEnabledCount }}</span>
+      </div>
+    </div>
+
+    <div class="surface-card stat-card">
+      <div class="stat-icon-wrapper orange">
+        <i class="fa fa-exclamation-triangle"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">MFA Disabled</span>
+        <span class="stat-value">{{ mfaDisabledCount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Bulk actions panel -->
+  <div class="surface-card control-panel">
+    <div style="flex: 1; max-width: 400px; position: relative;">
+      <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+      <input 
+        type="text" 
+        class="input-modern" 
+        placeholder="Search users by name, email, department..." 
+        [(ngModel)]="searchQuery" 
+        (input)="currentPage = 1" 
+        style="padding-left: 2.5rem; width: 100%;">
+    </div>
+
+    <!-- Bulk Actions Toolbar -->
+    <div class="bulk-toolbar" *ngIf="selectedEmpIds.size > 0">
+      <span class="selection-count">
+        <i class="fa fa-info-circle"></i> {{ selectedEmpIds.size }} user(s) selected
+      </span>
+      <div class="bulk-buttons">
+        <button class="btn-modern btn-primary" (click)="bulkToggleMfaStatus(true)" style="background-color: var(--success); border-color: var(--success);">
+          <i class="fa fa-shield"></i> Enable MFA
+        </button>
+        <button class="btn-modern btn-primary" (click)="bulkToggleMfaStatus(false)" style="background-color: var(--error); border-color: var(--error);">
+          <i class="fa fa-ban"></i> Disable MFA
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="surface-card table-wrapper" style="padding: 0; overflow-x: auto;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 50px; text-align: center;">
+              <input 
+                type="checkbox" 
+                [checked]="isAllSelected()" 
+                (change)="toggleSelectAll()" 
+                class="checkbox-modern">
+            </th>
+            <th style="width: 80px; text-align: center;">Avatar</th>
+            <th>Emp ID</th>
+            <th>Name</th>
+            <th>Email Address</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th style="width: 150px; text-align: center;">MFA Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let emp of filteredAndPagedEmployees" style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+            <!-- Checkbox Selection -->
+            <td style="text-align: center; padding: 1rem;">
+              <input 
+                type="checkbox" 
+                [checked]="selectedEmpIds.has(emp.empID)" 
+                (change)="toggleSelect(emp.empID)" 
+                class="checkbox-modern">
+            </td>
+            <!-- Avatar -->
+            <td style="padding: 0.5rem; text-align: center;">
+              <div class="employee-avatar-wrapper">
+                <img *ngIf="emp.imagePath" [src]="emp.imagePath" class="employee-table-avatar" alt="Avatar">
+                <div *ngIf="!emp.imagePath" class="employee-table-avatar-placeholder">
+                  {{ getInitials(emp.empName) }}
+                </div>
+              </div>
+            </td>
+            <!-- EmpID -->
+            <td style="padding: 1rem; font-weight: 600;">{{ emp.empID }}</td>
+            <!-- Name -->
+            <td style="padding: 1rem;">{{ emp.empName }}</td>
+            <!-- Email -->
+            <td style="padding: 1rem; color: var(--text-secondary);">{{ emp.emailid }}</td>
+            <!-- Department -->
+            <td style="padding: 1rem; color: var(--text-secondary);">{{ emp.department }}</td>
+            <!-- Designation -->
+            <td style="padding: 1rem; color: var(--text-secondary);">{{ emp.designation }}</td>
+            <!-- MFA Status Toggle Switch -->
+            <td style="padding: 1rem; text-align: center;">
+              <label class="switch">
+                <input 
+                  type="checkbox" 
+                  [checked]="emp.isMfaEnabled" 
+                  (change)="onToggleMfa(emp)">
+                <span class="slider round"></span>
+              </label>
+              <div style="font-size: 0.75rem; margin-top: 0.25rem; font-weight: 500;" 
+                   [ngStyle]="{'color': emp.isMfaEnabled ? 'var(--success)' : 'var(--error)'}">
+                {{ emp.isMfaEnabled ? 'Enabled' : 'Disabled' }}
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredAndPagedEmployees.length === 0">
+            <td colspan="8" style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+              <i class="fa fa-info-circle fa-2x" style="margin-bottom: 0.5rem; display: block; color: var(--text-muted);"></i>
+              No employees found matching search query.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.5rem 1rem;" *ngIf="totalPages > 1">
+    <button class="btn-modern btn-ghost" [disabled]="currentPage === 1" (click)="currentPage = currentPage - 1">
+      <i class="fa fa-chevron-left"></i> Previous
+    </button>
+    <span style="color: var(--text-secondary); font-size: 0.9rem;">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button class="btn-modern btn-ghost" [disabled]="currentPage === totalPages" (click)="currentPage = currentPage + 1">
+      Next <i class="fa fa-chevron-right"></i>
+    </button>
+  </div>
+</div>
+
+

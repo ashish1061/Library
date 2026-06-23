@@ -1,0 +1,4 @@
+EmpID,EmpName,password,emailid,mobile,Department,Designation
+JSL001,John Doe,,john.doe@jindalstainless.com,9876543210,HR,Manager
+JSL002,Jane Smith,,jane.smith@jindalstainless.com,9876543211,IT,Engineer
+JSL003,Raj Kumar,,raj.kumar@jindalstainless.com,9876543212,Finance,Analyst

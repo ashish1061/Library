@@ -1,0 +1,179 @@
+<div class="manage-magazines-container">
+  
+  <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 class="page-title"><i class="fa fa-newspaper-o"></i> Manage Magazines</h1>
+      <p class="page-subtitle">Add, edit, delete, and bulk upload magazines.</p>
+    </div>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <div style="position: relative; max-width: 300px;">
+        <i class="fa fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+        <input 
+          type="text" 
+          class="input-modern" 
+          style="padding-left: 2.5rem;" 
+          placeholder="Search Title or Publisher..."
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchChange()">
+      </div>
+      <button class="btn-modern btn-secondary" (click)="openBulkModal()">
+        <i class="fa fa-upload"></i> Bulk Upload (CSV)
+      </button>
+      <button class="btn-modern btn-primary" (click)="openAddModal()">
+        <i class="fa fa-plus"></i> Add Magazine
+      </button>
+    </div>
+  </div>
+
+  <div class="table-card surface-card" style="margin-top: 1.5rem;">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cover</th>
+            <th>Title</th>
+            <th>Publisher</th>
+            <th>Issue Date</th>
+            <th>Rack</th>
+            <th>Copies (Avail/Total)</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoadingList">
+            <td colspan="8" style="text-align: center; padding: 2rem;">
+              <i class="fa fa-spinner fa-spin fa-2x" style="color: var(--primary);"></i>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingList && filteredMagazines.length === 0">
+            <td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              No magazines found.
+            </td>
+          </tr>
+          <tr *ngFor="let item of filteredMagazines">
+            <td>{{ item.magazineId || item.MagazineId }}</td>
+            <td>
+              <img [src]="getCoverUrl(item.coverImagePath || item.CoverImagePath)" alt="Cover" style="width: 40px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color);" />
+            </td>
+            <td style="font-weight: 500;">{{ item.title || item.Title }}</td>
+            <td>{{ item.publisher || item.Publisher }}</td>
+            <td>{{ item.issueDate || item.IssueDate }}</td>
+            <td>{{ item.rackLocation || item.RackLocation || 'N/A' }}</td>
+            <td>
+              <span [ngStyle]="{'color': (item.availableCopies || item.AvailableCopies) > 0 ? 'var(--success)' : 'var(--danger)', 'font-weight': '600'}">
+                {{ item.availableCopies || item.AvailableCopies }}
+              </span>
+              <span style="color: var(--text-muted);"> / {{ item.totalCopies || item.TotalCopies }}</span>
+            </td>
+            <td style="text-align: right;">
+              <button class="action-btn" (click)="openEditModal(item)" title="Edit">
+                <i class="fa fa-pencil"></i>
+              </button>
+              <button class="action-btn text-danger" (click)="deleteMagazine(item.magazineId || item.MagazineId)" title="Delete">
+                <i class="fa fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Add / Edit Magazine -->
+<div class="modal-overlay" *ngIf="showModal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div class="modal-card" style="background: white; border-radius: 8px; width: 600px; max-width: 95vw; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; max-height: 90vh;">
+    <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; font-size: 1.25rem;">{{ isEditMode ? 'Edit Magazine' : 'Add New Magazine' }}</h2>
+      <button (click)="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 1.5rem; overflow-y: auto;">
+      <form [formGroup]="magazineForm" (ngSubmit)="onSubmit()">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div style="grid-column: 1 / -1; display: flex; gap: 1rem;">
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Magazine ID <span style="color:red">*</span></label>
+              <input type="number" formControlName="magazineId" class="input-modern" style="width: 100%;" [readonly]="isEditMode" [ngStyle]="{'background-color': isEditMode ? 'var(--bg-subtle)' : 'white'}" />
+            </div>
+            <div style="flex: 3;">
+              <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Title <span style="color:red">*</span></label>
+              <input type="text" formControlName="title" class="input-modern" style="width: 100%;" />
+            </div>
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Publisher <span style="color:red">*</span></label>
+            <input type="text" formControlName="publisher" class="input-modern" style="width: 100%;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Issue Date <span style="color:red">*</span></label>
+            <input type="date" formControlName="issueDate" class="input-modern" style="width: 100%;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Category</label>
+            <input type="text" formControlName="category" class="input-modern" style="width: 100%;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Rack Location</label>
+            <input type="text" formControlName="rackLocation" class="input-modern" style="width: 100%;" />
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Total Copies <span style="color:red">*</span></label>
+            <input type="number" formControlName="totalCopies" min="1" class="input-modern" style="width: 100%;" />
+          </div>
+          <div style="grid-column: 1 / -1; margin-top: 0.5rem;">
+            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.85rem;">Cover Image</label>
+            <div style="display: flex; gap: 1rem; align-items: flex-end;">
+              <img [src]="getCoverUrl(coverImagePath)" style="height: 80px; width: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #e2e8f0;" />
+              <div>
+                <input type="file" (change)="onFileSelected($event)" accept="image/*" style="display: none;" #fileInput />
+                <button type="button" class="btn-modern btn-secondary btn-sm" (click)="fileInput.click()" [disabled]="isUploading">
+                  <i class="fa" [ngClass]="isUploading ? 'fa-spinner fa-spin' : 'fa-upload'"></i> Upload New Cover
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 1rem;">
+      <button class="btn-modern btn-ghost" (click)="closeModal()">Cancel</button>
+      <button class="btn-modern btn-primary" (click)="onSubmit()" [disabled]="magazineForm.invalid || isSaving || isUploading">
+        <i class="fa" [ngClass]="isSaving ? 'fa-spinner fa-spin' : 'fa-save'"></i> Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Bulk Upload -->
+<div class="modal-overlay" *ngIf="showBulkModal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div class="modal-card" style="background: white; border-radius: 8px; width: 500px; max-width: 90vw; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+    <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; font-size: 1.25rem;">Bulk Upload Magazines (CSV)</h2>
+      <button (click)="closeBulkModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 1.5rem;">
+      <div style="background-color: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 0.95rem; font-weight: 600; margin-top: 0; margin-bottom: 0.5rem;"><i class="fa fa-info-circle" style="color: var(--primary);"></i> Upload Instructions</h3>
+        <ul style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; padding-left: 1.25rem;">
+          <li>Create a <strong>.csv</strong> file.</li>
+          <li>Column headers must match the sample format exactly.</li>
+          <li>Cover images can be assigned later, or by uploading their paths in the CSV.</li>
+        </ul>
+        <div style="margin-top: 0.75rem;">
+          <a href="/assets/sample-magazines.csv" download style="font-size: 0.85rem; color: var(--accent); font-weight: 500; text-decoration: none;">
+            <i class="fa fa-download"></i> Download Sample CSV
+          </a>
+        </div>
+      </div>
+      <input type="file" (change)="onBulkFileSelected($event)" accept=".csv" class="input-modern" style="width: 100%; padding: 0.5rem;" />
+    </div>
+    <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 1rem;">
+      <button class="btn-modern btn-ghost" (click)="closeBulkModal()">Cancel</button>
+      <button class="btn-modern btn-primary" (click)="uploadBulk()" [disabled]="!bulkUploadFile || isUploading">
+        <i class="fa" [ngClass]="isUploading ? 'fa-spinner fa-spin' : 'fa-upload'"></i> Upload CSV
+      </button>
+    </div>
+  </div>
+</div>

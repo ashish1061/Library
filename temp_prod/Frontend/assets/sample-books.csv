@@ -1,0 +1,4 @@
+Anum,Book_name,Book_author,Book_rack,Book_class,Book_category,Publisher,ISBN,Edition,TotalCopies,CoverImage (Optional)
+1001,"The Great Gatsby","F. Scott Fitzgerald","R1-S2","Fiction","Classic Literature","Scribner","978-0743273565","1st",3,
+1002,"Clean Code","Robert C. Martin","R2-S1","Computer Science","Programming","Prentice Hall","978-0132350884","1st",5,
+1003,"Design Patterns","Erich Gamma","R2-S2","Computer Science","Software Engineering","Addison-Wesley","978-0201633610","2nd",2,

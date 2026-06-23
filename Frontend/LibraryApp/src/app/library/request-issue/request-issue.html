@@ -1,0 +1,217 @@
+<div class="book-search-container" style="padding-bottom: 2rem;">
+    
+  <!-- Search Banner Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><i class="fa fa-hand-paper-o"></i> Request Library Issue</h1>
+      <p class="page-subtitle">Search the catalog for Books and Magazines and request to have them issued to you.</p>
+    </div>
+  </div>
+
+  <!-- Filters Card Panel -->
+  <div class="filters-card">
+    <div class="filters-row">
+      
+      <!-- Keyword Input -->
+      <div class="input-group" style="flex: 2; min-width: 250px;">
+        <label class="field-label" style="font-weight: 600; margin-bottom: 0.25rem; display: block; color: var(--text-secondary); font-size: 0.85rem;">
+          Search Keyword
+        </label>
+        <div class="filter-input-wrapper">
+          <i class="fa fa-search"></i>
+          <input 
+            type="text" 
+            class="input-modern" 
+            [(ngModel)]="keyword" 
+            (ngModelChange)="onSearchChange()" 
+            placeholder="Title or Publisher/Author..." />
+        </div>
+      </div>
+
+      <!-- Item Type Filter -->
+      <div class="input-group" style="flex: 1; min-width: 150px;">
+        <label class="field-label" style="font-weight: 600; margin-bottom: 0.25rem; display: block; color: var(--text-secondary); font-size: 0.85rem;">
+          Type
+        </label>
+        <div class="filter-input-wrapper">
+          <i class="fa fa-filter" style="z-index: 10;"></i>
+          <select 
+            class="input-modern" 
+            [(ngModel)]="itemTypeFilter" 
+            (ngModelChange)="onSearchChange()"
+            style="padding-left: 2.5rem; cursor: pointer;">
+            <option value="All">All Items</option>
+            <option value="Book">Books Only</option>
+            <option value="Magazine">Magazines Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Per Page Dropdown -->
+      <div class="input-group" style="flex: 0; min-width: 150px;">
+        <label class="field-label" style="font-weight: 600; margin-bottom: 0.25rem; display: block; color: var(--text-secondary); font-size: 0.85rem;">
+          Per Page
+        </label>
+        <div class="filter-input-wrapper">
+          <i class="fa fa-list-ol" style="z-index: 10;"></i>
+          <select 
+            class="input-modern" 
+            [(ngModel)]="pageSize" 
+            (ngModelChange)="onPageSizeChange()"
+            style="padding-left: 2.5rem; cursor: pointer;">
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="20">20</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+            <option [ngValue]="500">500</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Cards Grid View -->
+  <div class="cards-grid" *ngIf="filteredItems.length > 0">
+    <div class="book-card" *ngFor="let item of pagedItems">
+      
+      <!-- Top Cover Image or Fallback -->
+      <div class="book-cover-wrapper">
+        <ng-container *ngIf="item.CoverImagePath; else fallbackCover">
+          <img 
+            [src]="item.CoverImagePath.startsWith('http') ? item.CoverImagePath : documentBaseUrl + item.CoverImagePath" 
+            alt="Cover" 
+            class="book-cover-img" />
+        </ng-container>
+        <ng-template #fallbackCover>
+          <div class="book-cover-placeholder" [style.background]="getPlaceholderGradient(item)">
+            <span class="cover-category-badge">
+              {{ item.ItemType }}
+            </span>
+            <div class="cover-title-text">
+              {{ item.ItemName }}
+            </div>
+            <div class="cover-author-text">
+              <i class="fa fa-pencil-square-o"></i>
+              {{ item.Author || 'Unknown' }}
+            </div>
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Card Main Body Info -->
+      <div class="book-card-body">
+        <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); margin-bottom: 0.25rem;">
+          {{ item.ItemType }}
+        </div>
+        <h3 class="book-title-main" [title]="item.ItemName">
+          {{ item.ItemName }}
+        </h3>
+        
+        <ul class="book-meta-list">
+          <li class="book-meta-item">
+            <i class="fa fa-pencil"></i>
+            <span>By/Pub: <strong>{{ item.Author || 'Unknown' }}</strong></span>
+          </li>
+          <li class="book-meta-item">
+            <i class="fa fa-tag"></i>
+            <span>Category: <strong>{{ item.Category || 'General' }}</strong></span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Footer Action Block -->
+      <div class="book-card-footer">
+        
+        <!-- Status Indicator Pill -->
+        <span 
+          class="status-badge" 
+          [class.available]="item.IsAvailable" 
+          [class.issued]="!item.IsAvailable">
+          <i class="fa fa-check-circle" *ngIf="item.IsAvailable"></i>
+          <i class="fa fa-times-circle" *ngIf="!item.IsAvailable"></i>
+          <span>{{ item.IsAvailable ? 'Available' : 'Unavailable' }}</span>
+        </span>
+
+        <!-- Reservation CTA -->
+        <button 
+          *ngIf="item.IsAvailable"
+          class="btn-modern btn-primary btn-reserve"
+          (click)="requestIssue(item)">
+          <i class="fa fa-paper-plane-o"></i>
+          <span>Request</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty Results / Not Found States -->
+  <div class="search-empty-state" *ngIf="filteredItems.length === 0 && !isLoading">
+    <i class="fa fa-folder-open-o"></i>
+    <h3>No items found</h3>
+    <p>We couldn't find any {{ itemTypeFilter === 'All' ? 'items' : itemTypeFilter + 's' }} matching your criteria.</p>
+  </div>
+
+  <!-- Loading Skeletons State -->
+  <div class="search-empty-state" *ngIf="isLoading" style="border-style: solid;">
+    <i class="fa fa-circle-o-notch fa-spin" style="color: var(--primary); font-size: 2.5rem;"></i>
+    <h3>Loading Catalog...</h3>
+  </div>
+
+  <!-- Pagination Foot Controls -->
+  <div class="surface-card" *ngIf="filteredItems.length > 0" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding: 1.25rem 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+    <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">
+      Showing <strong style="color: var(--text-main);">{{ (currentPage - 1) * pageSize + 1 }}</strong> to 
+      <strong style="color: var(--text-main);">{{ (currentPage * pageSize) > filteredItems.length ? filteredItems.length : (currentPage * pageSize) }}</strong> 
+      of <strong style="color: var(--text-main);">{{ filteredItems.length }}</strong> results
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button 
+        class="btn-modern btn-secondary" 
+        style="padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.4rem; height: 36px; font-weight: 600;" 
+        (click)="prevPage()" 
+        [disabled]="currentPage === 1">
+        <i class="fa fa-chevron-left"></i> <span>Prev</span>
+      </button>
+      
+      <span style="font-weight: 600; font-size: 0.85rem; margin: 0 0.75rem; color: var(--text-secondary);">
+        Page {{ currentPage }} of {{ totalPages }}
+      </span>
+      
+      <button 
+        class="btn-modern btn-secondary" 
+        style="padding: 0.4rem 1rem; display: inline-flex; align-items: center; gap: 0.4rem; height: 36px; font-weight: 600;" 
+        (click)="nextPage()" 
+        [disabled]="currentPage === totalPages">
+        <span>Next</span> <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <!-- Confirmation Modal -->
+  <div *ngIf="showConfirmPopup" style="position: fixed; inset: 0; z-index: 999999; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);">
+    <div class="surface-card" style="width: 90%; max-width: 450px; background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0; font-size: 1.5rem; color: #1e293b;"><i class="fa fa-question-circle" style="color: var(--primary);"></i> Confirm Request</h2>
+        <button (click)="cancelRequest()" style="background: transparent; border: none; font-size: 1.25rem; cursor: pointer; color: #64748b;"><i class="fa fa-times"></i></button>
+      </div>
+      <div *ngIf="selectedItemForRequest">
+        <p style="margin-bottom: 1rem; color: #475569;">Are you sure you want to request this item?</p>
+        <div style="padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <p style="margin: 0 0 0.5rem 0; color: #334155;"><strong>Type:</strong> <span class="status-badge" [ngClass]="selectedItemForRequest.ItemType === 'Magazine' ? 'issued' : 'available'">{{ selectedItemForRequest.ItemType }}</span></p>
+          <p style="margin: 0 0 0.5rem 0; color: #334155;"><strong>Title:</strong> <span style="font-weight: 600;">{{ selectedItemForRequest.ItemName }}</span></p>
+          <p style="margin: 0 0 0.5rem 0; color: #334155;"><strong>Author/Pub:</strong> {{ selectedItemForRequest.Author || 'Unknown' }}</p>
+          <p style="margin: 0; color: #334155;"><strong>Category:</strong> {{ selectedItemForRequest.Category || 'General' }}</p>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+        <button class="btn-modern btn-secondary" (click)="cancelRequest()">Cancel</button>
+        <button class="btn-modern btn-primary" (click)="confirmRequest()"><i class="fa fa-paper-plane-o"></i> Confirm Request</button>
+      </div>
+    </div>
+  </div>
+
+</div>

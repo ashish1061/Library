@@ -1,0 +1,470 @@
+<div class="mb-page">
+
+  <!-- ── PAGE HEADER ─────────────────────────────────── -->
+  <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <h1 class="page-title">
+        <i class="fa fa-book"></i> Manage Books
+      </h1>
+      <p class="page-subtitle">Add new books or look up and update existing inventory.</p>
+    </div>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+      <button class="btn-modern btn-ghost" (click)="downloadCompleteCsv()" title="Download complete book catalog to CSV">
+        <i class="fa fa-table"></i> Export Complete CSV
+      </button>
+      <button class="btn-modern btn-secondary" (click)="openBulkModal()">
+        <i class="fa fa-upload"></i> Bulk Upload CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- ── LOOKUP STRIP ──────────────────────────────────── -->
+  <div class="mb-lookup-strip surface-card">
+    <div class="mb-lookup-label">
+      <i class="fa fa-search"></i>
+      <span>Look up existing book by Accession No.</span>
+    </div>
+    <div class="mb-lookup-controls">
+      <input
+        type="number"
+        [(ngModel)]="lookupAnum"
+        name="lookupAnum"
+        class="input-modern mb-lookup-input"
+        placeholder="e.g. 1001" />
+      <button
+        type="button"
+        class="btn-modern btn-secondary"
+        (click)="checkBook()"
+        [disabled]="isChecking || !lookupAnum">
+        <span *ngIf="!isChecking"><i class="fa fa-search"></i> Load Book</span>
+        <span *ngIf="isChecking"><i class="fa fa-spinner fa-spin"></i> Loading…</span>
+      </button>
+      <button
+        type="button"
+        class="btn-modern btn-ghost"
+        (click)="clearForm()"
+        title="Clear form">
+        <i class="fa fa-times"></i> Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- ── INVENTORY PANEL (shown after Load Book) ──────── -->
+  <div class="mb-inventory-panel surface-card" *ngIf="loadedBook">
+    <div class="mb-inventory-header">
+      <div class="mb-inventory-title">
+        <i class="fa fa-cubes"></i>
+        Current Inventory
+        <span class="mb-inventory-anum">· Accession #{{ loadedBook.anum || loadedBook.Anum }}</span>
+      </div>
+      <button type="button" class="mb-inventory-close" (click)="loadedBook = null" title="Dismiss">
+        <i class="fa fa-times"></i>
+      </button>
+    </div>
+
+    <div class="mb-inventory-body">
+
+      <!-- Availability -->
+      <div class="mb-inv-tile"
+           [ngClass]="{
+             'inv-available':     (loadedBook.available === true),
+             'inv-not-available': (loadedBook.available === false),
+             'inv-lost':          (loadedBook.availabilityStatus === 'Lost')
+           }">
+        <div class="mb-inv-tile-icon">
+          <i class="fa"
+             [ngClass]="{
+               'fa-check-circle':        loadedBook.available === true,
+               'fa-times-circle':        loadedBook.available === false,
+               'fa-exclamation-triangle':loadedBook.availabilityStatus === 'Lost'
+             }"></i>
+        </div>
+        <div class="mb-inv-tile-info">
+          <span class="mb-inv-tile-label">Availability</span>
+          <span class="mb-inv-tile-value">
+            {{ loadedBook.available === true ? 'Available'
+               : loadedBook.available === false ? 'Not Available'
+               : (loadedBook.availabilityStatus || '—') }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Live Available Copies Count -->
+      <div class="mb-inv-tile"
+           [ngClass]="{
+             'inv-available':     availableCopiesCount > 0,
+             'inv-not-available': availableCopiesCount === 0
+           }">
+        <div class="mb-inv-tile-icon">
+          <i class="fa"
+             [ngClass]="{
+               'fa-check-circle': availableCopiesCount > 0,
+               'fa-times-circle': availableCopiesCount === 0
+             }"></i>
+        </div>
+        <div class="mb-inv-tile-info">
+          <span class="mb-inv-tile-label">Copies In Library</span>
+          <span class="mb-inv-tile-value" style="font-weight: 700;">
+            {{ availableCopiesCount }} / {{ loadedBook.totalCopies || loadedBook.TotalCopies || 1 }} Available
+          </span>
+        </div>
+      </div>
+
+      <!-- Total Copies -->
+      <div class="mb-inv-tile inv-neutral">
+        <div class="mb-inv-tile-icon">
+          <i class="fa fa-copy"></i>
+        </div>
+        <div class="mb-inv-tile-info">
+          <span class="mb-inv-tile-label">Total Copies</span>
+          <span class="mb-inv-tile-value">{{ loadedBook.totalCopies || loadedBook.TotalCopies || 1 }}</span>
+        </div>
+      </div>
+
+      <!-- Issued To -->
+      <div class="mb-inv-tile inv-neutral">
+        <div class="mb-inv-tile-icon">
+          <i class="fa fa-user"></i>
+        </div>
+        <div class="mb-inv-tile-info">
+          <span class="mb-inv-tile-label">Issued To</span>
+          <span class="mb-inv-tile-value">
+            {{ (loadedBook.issuedTo || loadedBook.IssuedTo) ? (loadedBook.issuedTo || loadedBook.IssuedTo) : '—' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Shelf / Rack -->
+      <div class="mb-inv-tile inv-neutral">
+        <div class="mb-inv-tile-icon">
+          <i class="fa fa-map-marker"></i>
+        </div>
+        <div class="mb-inv-tile-info">
+          <span class="mb-inv-tile-label">Rack Location</span>
+          <span class="mb-inv-tile-value">
+            {{ loadedBook.book_rack || loadedBook.Book_rack || '—' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Category -->
+      <div class="mb-inv-tile inv-neutral">
+        <div class="mb-inv-tile-icon">
+          <i class="fa fa-tag"></i>
+        </div>
+        <div class="mb-inv-tile-info">
+          <span class="mb-inv-tile-label">Category</span>
+          <span class="mb-inv-tile-value">
+            {{ loadedBook.book_category || loadedBook.Book_category || loadedBook.category || '—' }}
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── MAIN FORM ─────────────────────────────────────── -->
+
+  <form [formGroup]="bookForm" (ngSubmit)="onSubmit()" novalidate>
+
+    <div class="mb-form-grid">
+
+      <!-- LEFT COLUMN ──────────────────────────────────── -->
+      <div class="mb-col-left">
+
+        <!-- § Book Identity -->
+        <div class="surface-card mb-section">
+          <div class="mb-section-header">
+            <i class="fa fa-id-badge"></i>
+            <span>Book Identity</span>
+          </div>
+          <div class="mb-fields">
+
+            <div class="mb-field-row mb-two-col">
+              <div class="mb-field">
+                <label class="mb-label">Accession Number <span class="required">*</span></label>
+                <input
+                  type="number"
+                  formControlName="anum"
+                  class="input-modern"
+                  placeholder="e.g. 1001" />
+                <span class="mb-error" *ngIf="f['anum'].invalid && f['anum'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+              <div class="mb-field">
+                <label class="mb-label">ISBN <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="isbn"
+                  class="input-modern"
+                  placeholder="978-3-16-148410-0" />
+                <span class="mb-error" *ngIf="f['isbn'].invalid && f['isbn'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+            </div>
+
+            <div class="mb-field">
+              <label class="mb-label">Book Title <span class="required">*</span></label>
+              <input
+                type="text"
+                formControlName="bookName"
+                class="input-modern"
+                placeholder="Full book title" />
+              <span class="mb-error" *ngIf="f['bookName'].invalid && f['bookName'].touched">
+                <i class="fa fa-exclamation-circle"></i> Required
+              </span>
+            </div>
+
+            <div class="mb-field-row mb-two-col">
+              <div class="mb-field">
+                <label class="mb-label">Author <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="author"
+                  class="input-modern"
+                  placeholder="Author name" />
+                <span class="mb-error" *ngIf="f['author'].invalid && f['author'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+              <div class="mb-field">
+                <label class="mb-label">Publisher <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="publisher"
+                  class="input-modern"
+                  placeholder="Publisher name" />
+                <span class="mb-error" *ngIf="f['publisher'].invalid && f['publisher'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+            </div>
+
+            <div class="mb-field-row mb-two-col">
+              <div class="mb-field">
+                <label class="mb-label">Edition <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="edition"
+                  class="input-modern"
+                  placeholder="e.g. 3rd" />
+                <span class="mb-error" *ngIf="f['edition'].invalid && f['edition'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+              <div class="mb-field">
+                <label class="mb-label">Rack Location <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="book_rack"
+                  class="input-modern"
+                  placeholder="e.g. R1-S2" />
+                <span class="mb-error" *ngIf="f['book_rack'].invalid && f['book_rack'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- § Classification -->
+        <div class="surface-card mb-section">
+          <div class="mb-section-header">
+            <i class="fa fa-tags"></i>
+            <span>Classification</span>
+          </div>
+          <div class="mb-fields">
+            <div class="mb-field-row mb-two-col">
+              <div class="mb-field">
+                <label class="mb-label">Book Class <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="bookClass"
+                  class="input-modern"
+                  placeholder="e.g. Programming" />
+                <span class="mb-error" *ngIf="f['bookClass'].invalid && f['bookClass'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+              <div class="mb-field">
+                <label class="mb-label">Category <span class="required">*</span></label>
+                <input
+                  type="text"
+                  formControlName="category"
+                  class="input-modern"
+                  placeholder="e.g. C# & .NET" />
+                <span class="mb-error" *ngIf="f['category'].invalid && f['category'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN ─────────────────────────────────── -->
+      <div class="mb-col-right">
+
+        <!-- § Inventory -->
+        <div class="surface-card mb-section">
+          <div class="mb-section-header">
+            <i class="fa fa-cubes"></i>
+            <span>Inventory</span>
+          </div>
+          <div class="mb-fields">
+
+            <div class="mb-field-row mb-two-col">
+              <div class="mb-field">
+                <label class="mb-label">Number of Copies <span class="required">*</span></label>
+                <input
+                  type="number"
+                  formControlName="numBooks"
+                  class="input-modern"
+                  placeholder="1"
+                  min="1"
+                  max="999" />
+                <span class="mb-error" *ngIf="f['numBooks'].invalid && f['numBooks'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required (min 1)
+                </span>
+              </div>
+              <div class="mb-field">
+                <label class="mb-label">Availability Status <span class="required">*</span></label>
+                <select formControlName="availabilityStatus" class="input-modern">
+                  <option value="Available">Available</option>
+                  <option value="Not Available">Not Available</option>
+                  <option value="Lost">Lost</option>
+                </select>
+                <span class="mb-error" *ngIf="f['availabilityStatus'].invalid && f['availabilityStatus'].touched">
+                  <i class="fa fa-exclamation-circle"></i> Required
+                </span>
+              </div>
+            </div>
+
+            <div class="mb-availability-badge" [ngClass]="{
+              'status-available':     bookForm.get('availabilityStatus')?.value === 'Available',
+              'status-not-available': bookForm.get('availabilityStatus')?.value === 'Not Available',
+              'status-lost':          bookForm.get('availabilityStatus')?.value === 'Lost'
+            }">
+              <i class="fa" [ngClass]="{
+                'fa-check-circle':    bookForm.get('availabilityStatus')?.value === 'Available',
+                'fa-times-circle':    bookForm.get('availabilityStatus')?.value === 'Not Available',
+                'fa-exclamation-triangle': bookForm.get('availabilityStatus')?.value === 'Lost'
+              }"></i>
+              Status:
+              <strong>{{ bookForm.get('availabilityStatus')?.value }}</strong>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- § Book Cover -->
+        <div class="surface-card mb-section">
+          <div class="mb-section-header">
+            <i class="fa fa-image"></i>
+            <span>Book Cover</span>
+          </div>
+          <div class="mb-fields">
+
+            <!-- Cover preview area -->
+            <div class="mb-cover-preview" 
+                 [class.has-image]="coverImagePath"
+                 [class.drag-over]="isDragOver"
+                 (dragover)="onDragOver($event)"
+                 (dragleave)="onDragLeave($event)"
+                 (drop)="onDrop($event)">
+              <ng-container *ngIf="!coverImagePath">
+                <i class="fa" [ngClass]="isDragOver ? 'fa-download' : 'fa-image'" class="mb-cover-placeholder-icon"></i>
+                <span class="mb-cover-placeholder-text">{{ isDragOver ? 'Drop Image Here' : 'No cover uploaded' }}</span>
+              </ng-container>
+              <img
+                *ngIf="coverImagePath"
+                [src]="displayCoverImagePath"
+                alt="Book Cover Preview"
+                class="mb-cover-img" />
+            </div>
+
+            <!-- Upload control -->
+            <label class="mb-upload-label" 
+                   [class.uploading]="isUploading"
+                   [class.drag-over]="isDragOver"
+                   (dragover)="onDragOver($event)"
+                   (dragleave)="onDragLeave($event)"
+                   (drop)="onDrop($event)">
+              <i class="fa" [ngClass]="isUploading ? 'fa-spinner fa-spin' : 'fa-upload'"></i>
+              <span>{{ isUploading ? 'Uploading…' : (isDragOver ? 'Drop Image Here' : 'Choose or Drop Image') }}</span>
+              <input
+                type="file"
+                (change)="onFileSelected($event)"
+                accept="image/*"
+                [disabled]="isUploading"
+                class="mb-file-input" />
+            </label>
+            <p class="mb-upload-hint">Accepted: JPG, PNG, WEBP · Max 5 MB</p>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /.mb-form-grid -->
+
+    <!-- ── FORM ACTION BAR ───────────────────────────────── -->
+    <div class="mb-action-bar">
+      <button
+        type="button"
+        class="btn-modern btn-secondary"
+        (click)="clearForm()">
+        <i class="fa fa-refresh"></i> Clear Form
+      </button>
+      <button
+        type="submit"
+        class="btn-modern btn-primary"
+        [disabled]="isSaving">
+        <span *ngIf="!isSaving">
+          <i class="fa fa-save"></i> Save Book
+        </span>
+        <span *ngIf="isSaving">
+          <i class="fa fa-spinner fa-spin"></i> Saving…
+        </span>
+      </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- Modal: Bulk Upload -->
+<div class="modal-overlay" *ngIf="showBulkModal" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div class="modal-card" style="background: white; border-radius: 8px; width: 500px; max-width: 90vw; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column;">
+    <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; font-size: 1.25rem;">Bulk Upload Books (CSV)</h2>
+      <button (click)="closeBulkModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 1.5rem;">
+      <div style="background-color: var(--bg-subtle); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+        <h3 style="font-size: 0.95rem; font-weight: 600; margin-top: 0; margin-bottom: 0.5rem;"><i class="fa fa-info-circle" style="color: var(--primary);"></i> Upload Instructions</h3>
+        <ul style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; padding-left: 1.25rem;">
+          <li>Create a <strong>.csv</strong> file.</li>
+          <li>Column headers must match the sample format exactly.</li>
+          <li>Ensure required fields like Title and Accession No are populated.</li>
+        </ul>
+        <div style="margin-top: 0.75rem;">
+          <a href="/assets/sample-books.csv" download style="font-size: 0.85rem; color: var(--accent); font-weight: 500; text-decoration: none;">
+            <i class="fa fa-download"></i> Download Sample CSV
+          </a>
+        </div>
+      </div>
+      <input type="file" (change)="onBulkFileSelected($event)" accept=".csv" class="input-modern" style="width: 100%; padding: 0.5rem;" />
+    </div>
+    <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 1rem;">
+      <button class="btn-modern btn-ghost" (click)="closeBulkModal()">Cancel</button>
+      <button class="btn-modern btn-primary" (click)="uploadBulk()" [disabled]="!bulkUploadFile || isUploading">
+        <i class="fa" [ngClass]="isUploading ? 'fa-spinner fa-spin' : 'fa-upload'"></i> Upload CSV
+      </button>
+    </div>
+  </div>
+</div>
