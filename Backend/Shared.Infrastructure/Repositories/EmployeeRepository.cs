@@ -6,6 +6,7 @@ using Shared.Core.Domain;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 namespace Shared.Infrastructure.Repositories
 {
@@ -126,16 +127,28 @@ namespace Shared.Infrastructure.Repositories
 
         public async Task<int> UpsertEmployeesAsync(List<Employee> employees)
         {
+            using var db = new SqlConnection(_connectionString);
+            await db.OpenAsync();
+
+            // Fetch existing employee IDs to avoid hashing password using BCrypt for existing users
+            var existingIds = (await db.QueryAsync<string>("SELECT EmpID FROM Employee")).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             foreach (var employee in employees)
             {
-                if (string.IsNullOrEmpty(employee.password) || !employee.password.StartsWith("$2"))
+                if (!existingIds.Contains(employee.EmpID))
                 {
-                    employee.password = BCrypt.Net.BCrypt.HashPassword(string.IsNullOrEmpty(employee.password) ? "Library@123" : employee.password);
+                    if (string.IsNullOrEmpty(employee.password) || !employee.password.StartsWith("$2"))
+                    {
+                        employee.password = BCrypt.Net.BCrypt.HashPassword(string.IsNullOrEmpty(employee.password) ? "Library@123" : employee.password);
+                    }
+                }
+                else
+                {
+                    // Match exists, SQL MERGE won't update password so set to empty to bypass BCrypt hashing
+                    employee.password = "";
                 }
             }
 
-            using var db = new SqlConnection(_connectionString);
-            await db.OpenAsync();
             using var transaction = db.BeginTransaction();
 
             int rowsAffected = 0;
